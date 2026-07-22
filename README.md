@@ -78,12 +78,12 @@ On first run, a QR code is printed to the terminal — scan it from WhatsApp (**
 
 ## Roadmap
 
-- [ ] **Dockerfile** for containerized deployment
-- [ ] **Deploy to Railway** to keep the bot running 24/7
+- [X] **Dockerfile** for containerized deployment
+- [X] **Deploy to Railway** to keep the bot running 24/7
 - [ ] **`/help` command** listing all available commands and their descriptions
 - [ ] More commands (TBD based on actual group usage/needs)
 - [ ] Unit tests (`bun test`) for command handlers and database services
-- [ ] `.env.example` template
+- [X] `.env.example` template
 - [ ] Centralized environment validation at startup instead of failing on first DB access
 
 ## Built with
