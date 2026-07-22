@@ -1,7 +1,7 @@
 import { Boom } from "@hapi/boom";
 import { DisconnectReason, type WASocket } from "baileys";
 import logger from "../../../shared/utils/logger";
-import qrcode from "qrcode-terminal";
+import QRCode from "qrcode";
 
 /**
  * Registers connection-related events for the WhatsApp socket.
@@ -16,10 +16,13 @@ export function registerConnectionEvents(
     async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
         console.log(
-          await qrcode.generate(qr, {
-            small: true,
+          await QRCode.toString(qr, {
+            type: "terminal",
+            margin: 1,
           }),
         );
+
+        await QRCode.toFile("./auth/qr.png", qr);
       }
 
       if (connection === "close") {
