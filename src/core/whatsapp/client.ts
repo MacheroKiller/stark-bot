@@ -20,7 +20,6 @@ import { MessageUpsertEvents } from "./handlers/upsert.handler";
 export class WhatsAppClient {
   private sock!: WASocket;
   private readonly authFolder: string;
-  private pairingRequested = { value: false };
 
   constructor() {
     const sessionId = process.env.WHATSAPP_SESSION_ID || "stark-session";
@@ -64,17 +63,12 @@ export class WhatsAppClient {
       waWebSocketUrl: DEFAULT_CONNECTION_CONFIG.waWebSocketUrl,
       auth: state,
       browser: Browsers.macOS("Desktop"),
-      //printQRInTerminal: true,
       syncFullHistory: false,
       logger: pino({ level: "warn" }),
     });
 
     this.sock.ev.on("creds.update", saveCreds);
-    registerConnectionEvents(
-      this.sock,
-      () => this.reconnect(),
-      this.pairingRequested,
-    );
+    registerConnectionEvents(this.sock, () => this.reconnect());
     MessageUpsertEvents(this.sock);
   }
 

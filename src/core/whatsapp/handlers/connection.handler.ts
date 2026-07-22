@@ -10,23 +10,11 @@ import QRCode from "qrcode";
 export function registerConnectionEvents(
   sock: WASocket,
   onReconnect: () => void,
-  pairingRequested: { value: boolean },
 ) {
   sock.ev.on(
     "connection.update",
     async ({ connection, lastDisconnect, qr }) => {
       if (qr) {
-        pairingRequested.value = true;
-        // Pairing code for Web clients
-        // const phoneNumber = process.env.BOT_NUMBER;
-        // if (!phoneNumber) {
-        //   logger.error("No phone number added!");
-        //   return;
-        // }
-        // const code = await sock.requestPairingCode(phoneNumber);
-        // logger.info(`Phone number: ${phoneNumber}`);
-        // logger.info(`Pairing code: ${code}`);
-
         console.log(await QRCode.toString(qr, { type: "terminal" }));
       }
 

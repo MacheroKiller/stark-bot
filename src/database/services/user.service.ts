@@ -1,9 +1,9 @@
 import type { User } from "../interfaces/user.interface";
-import { userCollection } from "../models/user.model";
+import { getUserCollection } from "../models/user.model";
 
 export class UserService {
   async findOrCreateAndIncrement(whatsappId: string, groupWhatsappId: string) {
-    return userCollection.findOneAndUpdate(
+    return getUserCollection().findOneAndUpdate(
       { whatsappId, groupWhatsappId },
       {
         $setOnInsert: {
@@ -22,7 +22,7 @@ export class UserService {
   }
 
   async getTopMessageSenders(groupWhatsappId: string): Promise<User[]> {
-    return userCollection
+    return getUserCollection()
       .find({ groupWhatsappId })
       .sort({ totalMessagesSent: -1 })
       .limit(5)

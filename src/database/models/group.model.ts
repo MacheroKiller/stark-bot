@@ -1,5 +1,7 @@
 import { Collections } from "../collections";
 import type { Group } from "../interfaces/group.interface";
-import { db } from "../mongo";
+import { getDb } from "../mongo";
 
-export const groupCollection = db.collection<Group>(Collections.GROUP);
+export function getGroupCollection() {
+  return getDb().collection<Group>(Collections.GROUP);
+}

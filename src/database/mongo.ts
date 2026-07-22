@@ -1,16 +1,26 @@
-import { MongoClient } from "mongodb";
+import { Db, MongoClient } from "mongodb";
 
-const uri = process.env.DB_URI;
-const dbName = process.env.DB_NAME;
+let client: MongoClient | undefined;
+let db: Db | undefined;
 
-if (!uri) {
-  throw new Error("DB_URI no está definida");
+function requireEnv(name: string): string {
+  const value = process.env[name];
+  if (!value) {
+    throw new Error(`${name} no está definida`);
+  }
+  return value;
 }
 
-if (!dbName) {
-  throw new Error("DB_NAME no está definida");
+export function getMongoClient(): MongoClient {
+  if (!client) {
+    client = new MongoClient(requireEnv("DB_URI"));
+  }
+  return client;
 }
 
-export const client = new MongoClient(uri);
-
-export const db = client.db(dbName);
+export function getDb(): Db {
+  if (!db) {
+    db = getMongoClient().db(requireEnv("DB_NAME"));
+  }
+  return db;
+}

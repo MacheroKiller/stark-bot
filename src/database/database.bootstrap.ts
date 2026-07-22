@@ -1,10 +1,11 @@
 import type { ILogger } from "../shared/utils/logger";
-import { client } from "./mongo";
+import { getMongoClient } from "./mongo";
 
 export async function initDatabase(logger: ILogger): Promise<void> {
   logger.info("Connecting to database...");
 
   try {
+    const client = getMongoClient();
     await client.connect();
     await client.db("admin").command({ ping: 1 });
 

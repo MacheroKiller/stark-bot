@@ -39,7 +39,10 @@ export function MessageUpsertEvents(sock: WASocket) {
         if (!context) continue;
 
         const group = await groupService.findByWhatsappId(context.groupJid);
-        if (!group) continue;
+        if (!group) {
+          logger.warn(`Grupo no registrado: ${context.groupJid}`);
+          continue;
+        }
 
         if (isFromGroup) await countMessage(group, context, userService);
         if (isCommand) await handleCommand.handle(trimmedText, context, msg);

@@ -1,5 +1,7 @@
 import { Collections } from "../collections";
 import type { User } from "../interfaces/user.interface";
-import { db } from "../mongo";
+import { getDb } from "../mongo";
 
-export const userCollection = db.collection<User>(Collections.USER);
+export function getUserCollection() {
+  return getDb().collection<User>(Collections.USER);
+}

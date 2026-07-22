@@ -1,13 +1,13 @@
 import type { Group } from "../interfaces/group.interface";
-import { groupCollection } from "../models/group.model";
+import { getGroupCollection } from "../models/group.model";
 
 export class GroupService {
   findByWhatsappId(whatsappId: string) {
-    return groupCollection.findOne({ whatsappId });
+    return getGroupCollection().findOne({ whatsappId });
   }
 
   async findOrCreate(group: Group) {
-    return groupCollection.findOneAndUpdate(
+    return getGroupCollection().findOneAndUpdate(
       { whatsappId: group.whatsappId },
       {
         $setOnInsert: { ...group },
