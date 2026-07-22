@@ -5,7 +5,7 @@ export interface CommandHandler {
   description: string;
   execute(
     message: string,
-    from: string,
+    sender: string,
     msgObj?: proto.IWebMessageInfo,
   ): Promise<void>;
 }

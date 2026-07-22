@@ -1,95 +1,50 @@
 import type { proto } from "baileys";
-import { handlers } from "./command.registry";
+import { extractSenderJid } from "../shared/utils/jid";
 import logger from "../shared/utils/logger";
+import { handlers } from "./command.registry";
 
-export async function handleCommand(
-  message: string,
-  msgObj: proto.IWebMessageInfo,
-  isFromGroup: boolean,
-  isFromUser: boolean,
-) {
-  const [commandRaw] = message.trim().split(/\s+/);
+export interface ContextMessageDTO {
+  senderJid: string;
+  groupJid: string;
+}
 
-  if (!commandRaw) return;
+export class HandleCommand {
+  private readonly handlerMap = new Map(handlers.map((h) => [h.command, h]));
 
-  const command = commandRaw.toLowerCase();
-  const handler = handlers.find((h) => h.command === command);
+  async handle(
+    message: string,
+    context: ContextMessageDTO,
+    msgObj: proto.IWebMessageInfo,
+  ) {
+    const command = this.extractCommand(message);
+    if (!command) return;
+    const handler = this.findHandler(command);
+    if (!handler) return;
+    await handler.execute(message, context.groupJid, msgObj);
+  }
+  private extractCommand(message: string): string | null {
+    const [commandRaw] = message.trim().split(/\s+/);
 
-  if (!handler) return;
-
-  const groupJid = msgObj?.key?.remoteJid;
-  const senderJid = msgObj?.key?.participant || msgObj?.key?.remoteJid;
-
-  if (!senderJid) {
-    logger.error("No se pudo obtener el número del remitente.");
-    return;
+    return commandRaw?.toLowerCase() ?? null;
   }
 
-  if (!groupJid) {
-    logger.error("No se pudo obtener el número del grupo.");
-    return;
+  private findHandler(command: string) {
+    return this.handlerMap.get(command);
   }
+  getContext(msgObj: proto.IWebMessageInfo): ContextMessageDTO | null {
+    const groupJid = msgObj?.key?.remoteJid;
+    const senderJid = extractSenderJid(msgObj);
 
-  await handler.execute(message, groupJid, msgObj);
-  return;
+    if (!senderJid) {
+      logger.error("No se pudo obtener el número del remitente.");
+      return null;
+    }
 
-  //   const isFromAdmin = senderJid === ADMIN_NUMBER;
-  //   const isAdminCommand = AdminCommands.includes(command);
-  //   const isGroupCommand = GroupCommands.includes(command);
-  //   const isLeaderGroupCommand = LeaderGroupCommands.includes(command);
-  //   const isLeaderPrivateCommand = LeaderPrivateCommands.includes(command);
+    if (!groupJid) {
+      logger.error("No se pudo obtener el número del grupo.");
+      return null;
+    }
 
-  //   // 1. Admin Commands (Only the admin can execute)
-  //   if (isFromAdmin && isAdminCommand) {
-  //     await handler.execute(message, senderJid, msgObj);
-  //     return;
-  //   }
-
-  //   const isLeader = await groupUserService.isLeader(senderJid);
-
-  //   // 2. Group Commands and Leader Commands
-  //   if (isFromGroup) {
-  //     // puede ser el start de un grupo nuevo
-  //     if (command === Commands.START) {
-  //       await handler.execute(message, groupJid, msgObj);
-  //       return;
-  //     }
-
-  //     const groupDb = await groupService.findAuthorizedByWhatsappId(groupJid);
-
-  //     if (!groupDb) {
-  //       logger.warn(`⚠️ El grupo ${groupJid} no está registrado.`);
-  //       return;
-  //     }
-
-  //     // puede ser el comando de registro de un usuario a un grupo
-  //     if (command === Commands.REGISTER) {
-  //       await handler.execute(message, groupJid, msgObj);
-  //       return;
-  //     }
-
-  //     const isMember = groupDb.members?.find(
-  //       (members) => members.user?.whatsappId === senderJid,
-  //     );
-
-  //     if (!isMember) {
-  //       logger.warn(
-  //         `⚠️ El usuario ${senderJid} no está registrado en el grupo ${groupJid}.`,
-  //       );
-  //       return;
-  //     }
-
-  //     if (isGroupCommand || (isLeaderGroupCommand && isLeader)) {
-  //       return handler.execute(message, groupJid, msgObj);
-  //     }
-
-  //     return;
-  //   }
-
-  //   // Fuera de un grupo
-
-  //   if (!isFromGroup && isFromUser && isLeader && isLeaderPrivateCommand) {
-  //     await handler.execute(message, senderJid, msgObj);
-  //     return;
-  //   }
+    return { senderJid, groupJid };
+  }
 }

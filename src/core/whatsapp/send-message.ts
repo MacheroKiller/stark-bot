@@ -1,6 +1,6 @@
 import { type WAMessage, type WASocket } from "baileys";
-import { whatsappClient, type WhatsAppClient } from "./client";
 import logger from "../../shared/utils/logger";
+import { whatsappClient } from "./client";
 
 /**
  * Manages WhatsApp message sending and socket registration.
@@ -27,8 +27,8 @@ async function simulateTyping(jid: string, duration = 2000) {
 export async function sendMessageToGroup(
   whatsappId: string,
   message: string,
-  quoted?: WAMessage,
   mention?: string[],
+  quoted?: WAMessage,
 ) {
   socket = whatsappClient.getSocket();
   if (!socket) {

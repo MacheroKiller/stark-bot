@@ -1,4 +1,5 @@
 import { whatsappClient } from "./core/whatsapp/client";
+import { initDatabase } from "./database/database.bootstrap";
 import type { ILogger } from "./shared/utils/logger";
 import logger, { createLogger } from "./shared/utils/logger";
 
@@ -12,6 +13,7 @@ export class Application {
   async initialize(): Promise<void> {
     this.logger.info("🚀 Initializing Stark Bot...");
 
+    await initDatabase(this.logger);
     await this.initializeWhatsApp();
 
     this.logger.info("Stark Bot initialized successfully");
