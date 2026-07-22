@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  stark:
+    build: .
+    container_name: stark-bot
+    env_file:
+      - .env
+    volumes:
+      - ./auth:/app/auth
+    restart: unless-stopped
