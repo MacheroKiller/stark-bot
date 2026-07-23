@@ -28,4 +28,20 @@ export class UserService {
       .limit(5)
       .toArray();
   }
+
+  async findUser(
+    groupWhatsappId: string,
+    whatsappId: string,
+  ): Promise<User | null> {
+    return getUserCollection().findOne({ whatsappId, groupWhatsappId });
+  }
+
+  async findPosition(user: User) {
+    return (
+      (await getUserCollection().countDocuments({
+        groupWhatsappId: user.groupWhatsappId,
+        totalMessagesSent: { $gt: user.totalMessagesSent },
+      })) + 1
+    );
+  }
 }

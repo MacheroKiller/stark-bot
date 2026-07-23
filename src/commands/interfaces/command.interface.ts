@@ -5,7 +5,8 @@ export interface CommandHandler {
   description: string;
   execute(
     message: string,
-    sender: string,
+    groupSender: string,
+    userSender: string,
     msgObj?: proto.IWebMessageInfo,
   ): Promise<void>;
 }

@@ -20,7 +20,7 @@ export class HandleCommand {
     if (!command) return;
     const handler = this.findHandler(command);
     if (!handler) return;
-    await handler.execute(message, context.groupJid, msgObj);
+    await handler.execute(message, context.groupJid, context.senderJid, msgObj);
   }
   private extractCommand(message: string): string | null {
     const [commandRaw] = message.trim().split(/\s+/);
