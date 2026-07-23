@@ -11,12 +11,8 @@ export class TopCommand implements CommandHandler {
   description = "Returns the group's top message senders.";
   private readonly userService = new UserService();
 
-  async execute(
-    message: string,
-    sender: string,
-    msgObj?: proto.IWebMessageInfo,
-  ): Promise<void> {
-    const whatsappId = sender;
+  async execute(_: string, groupSender: string): Promise<void> {
+    const whatsappId = groupSender;
 
     const top = await this.userService.getTopMessageSenders(whatsappId);
 
