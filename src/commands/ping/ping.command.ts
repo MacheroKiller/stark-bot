@@ -6,8 +6,8 @@ export class PingCommand implements CommandHandler {
   command = Commands.PING;
   description = "Verified bot";
 
-  async execute(_: string, sender: string): Promise<void> {
+  async execute(_: string, groupJid: string): Promise<void> {
     const pingMessage = `Pong!`;
-    await sendMessageToGroup(sender, pingMessage.trim());
+    await sendMessageToGroup(groupJid, pingMessage.trim());
   }
 }
