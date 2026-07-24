@@ -1,5 +1,7 @@
 # stark-bot
 
+![CI](https://github.com/MacheroKiller/stark-bot/actions/workflows/ci.yml/badge.svg)
+
 A lightweight WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and [Bun](https://bun.com/), backed by MongoDB for persistent group/user data. It's the successor to an earlier Next.js-based bot (`wpp-bot`, now deprecated) — rebuilt from scratch with a leaner runtime, a cleaner command architecture, and no framework overhead it didn't need.
 
 ## Features
