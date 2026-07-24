@@ -1,5 +1,6 @@
 // src/database/services/group.service.test.ts
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { ObjectId } from "mongodb";
 
 const findOne = mock();
 const findOneAndUpdate = mock();
@@ -16,7 +17,11 @@ describe("GroupService.findByWhatsappId", () => {
   });
 
   test("busca por whatsappId", async () => {
-    const fakeGroup = { whatsappId: "123-456@g.us", name: "Grupo de prueba" };
+    const fakeGroup = {
+      _id: new ObjectId(),
+      whatsappId: "123-456@g.us",
+      name: "Grupo de prueba",
+    };
     findOne.mockResolvedValue(fakeGroup);
 
     const service = new GroupService();
@@ -42,7 +47,11 @@ describe("GroupService.findOrCreate", () => {
   });
 
   test("usa whatsappId como filtro y hace upsert con returnDocument after", async () => {
-    const group = { whatsappId: "123-456@g.us", name: "Grupo de prueba" };
+    const group = {
+      _id: new ObjectId(),
+      whatsappId: "123-456@g.us",
+      name: "Grupo de prueba",
+    };
     findOneAndUpdate.mockResolvedValue(group);
 
     const service = new GroupService();
@@ -62,7 +71,7 @@ describe("GroupService.findOrCreate", () => {
     const service = new GroupService();
     await service.findOrCreate(group);
 
-    const [, updateArg] = findOneAndUpdate.mock.calls[0];
+    const [, updateArg] = findOneAndUpdate.mock.calls[0]!;
 
     // el bug original (Hallazgo #1) era $setOnInsert: { group } —
     // este assert falla si alguien lo reintroduce sin querer

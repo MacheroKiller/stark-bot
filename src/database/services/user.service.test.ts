@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
+import { ObjectId } from "mongodb";
 
 const findOneAndUpdate = mock();
 const bulkWrite = mock();
@@ -109,7 +110,15 @@ describe("UserService.getTopMessageSenders", () => {
   });
 
   test("consulta por groupWhatsappId, ordena descendente y limita a 5", async () => {
-    const fakeUsers = [{ whatsappId: "1", totalMessagesSent: 99 }];
+    const fakeUsers = [
+      {
+        _id: new ObjectId(),
+        whatsappId: "1",
+        groupWhatsappId: "grupo-A",
+        isAdmin: false,
+        totalMessagesSent: 99,
+      },
+    ];
     toArray.mockResolvedValue(fakeUsers);
 
     const service = new UserService();
@@ -137,7 +146,13 @@ describe("UserService.findUser", () => {
   });
 
   test("busca por whatsappId y groupWhatsappId", async () => {
-    const fakeUser = { whatsappId: "123", groupWhatsappId: "456" };
+    const fakeUser = {
+      _id: new ObjectId(),
+      whatsappId: "123",
+      groupWhatsappId: "456",
+      isAdmin: false,
+      totalMessagesSent: 0,
+    };
     findOne.mockResolvedValue(fakeUser);
 
     const service = new UserService();
