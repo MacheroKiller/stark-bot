@@ -9,6 +9,8 @@ import type { User } from "../../database/interfaces/user.interface";
 export class TopCommand implements CommandHandler {
   command = Commands.TOP;
   description = "Returns the group's top message senders.";
+  requiresAdmin?: boolean | undefined = true;
+
   private readonly userService = new UserService();
 
   async execute(_: string, groupSender: string): Promise<void> {
@@ -31,13 +33,15 @@ export class TopCommand implements CommandHandler {
   }
 
   buildMessage(topFilter: User[]): string {
-    const header = "*_TOP SENDERS_*\n";
+    const header = "🏆 *_TOP SENDERS_* 🏆\n";
+
+    const medals = ["🥇", "🥈", "🥉"];
 
     const lines = topFilter
-      .map(
-        (user, index) =>
-          `${index + 1}. @${user.whatsappId} has ${user.totalMessagesSent} messages sent`,
-      )
+      .map((user, index) => {
+        const medal = medals[index] ?? "";
+        return `${index + 1}. @${user.whatsappId} has ${user.totalMessagesSent ?? 0} messages sent ${medal}`;
+      })
       .join("\n");
 
     return `${header}\n${lines}`;

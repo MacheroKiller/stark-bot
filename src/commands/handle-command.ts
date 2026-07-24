@@ -2,6 +2,8 @@ import type { proto } from "baileys";
 import { extractSenderJid } from "../shared/utils/jid";
 import logger from "../shared/utils/logger";
 import { handlers } from "./command.registry";
+import { sendMessageToGroup } from "../core/whatsapp/send-message";
+import { UserService } from "../database/services/user.service";
 
 export interface ContextMessageDTO {
   senderJid: string;
@@ -9,6 +11,8 @@ export interface ContextMessageDTO {
 }
 
 export class HandleCommand {
+  constructor(private readonly userService: UserService = new UserService()) {}
+
   private readonly handlerMap = new Map(handlers.map((h) => [h.command, h]));
 
   async handle(
@@ -18,8 +22,24 @@ export class HandleCommand {
   ) {
     const command = this.extractCommand(message);
     if (!command) return;
+
     const handler = this.findHandler(command);
     if (!handler) return;
+
+    if (handler.requiresAdmin) {
+      const user = await this.userService.findUser(
+        context.groupJid,
+        context.senderJid,
+      );
+      if (!user?.isAdmin) {
+        await sendMessageToGroup(
+          context.groupJid,
+          "Este comando es solo para administradores.",
+        );
+        return;
+      }
+    }
+
     await handler.execute(message, context.groupJid, context.senderJid, msgObj);
   }
   private extractCommand(message: string): string | null {
@@ -31,6 +51,7 @@ export class HandleCommand {
   private findHandler(command: string) {
     return this.handlerMap.get(command);
   }
+
   getContext(msgObj: proto.IWebMessageInfo): ContextMessageDTO | null {
     const groupJid = msgObj?.key?.remoteJid;
     const senderJid = extractSenderJid(msgObj);

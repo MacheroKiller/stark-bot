@@ -44,4 +44,24 @@ export class UserService {
       })) + 1
     );
   }
+
+  async setAdminStatus(
+    groupWhatsappId: string,
+    updates: { whatsappId: string; isAdmin: boolean }[],
+  ) {
+    if (updates.length === 0) return;
+
+    const ops = updates.map(({ whatsappId, isAdmin }) => ({
+      updateOne: {
+        filter: { whatsappId, groupWhatsappId },
+        update: {
+          $setOnInsert: { whatsappId, groupWhatsappId },
+          $set: { isAdmin },
+        },
+        upsert: true,
+      },
+    }));
+
+    await getUserCollection().bulkWrite(ops);
+  }
 }

@@ -71,11 +71,36 @@ export function MessageUpsertEvents(sock: WASocket) {
         logger.info(
           `Grupo sincronizado: ${groupBuild.whatsappId} (${groupBuild.name})`,
         );
+
+        const adminUpdates = (groupInfo.participants ?? []).map((p) => ({
+          whatsappId: p.id,
+          isAdmin: p.admin != null, // Baileys: "admin" | "superadmin" | undefined
+        }));
+        await userService.setAdminStatus(groupInfo.id, adminUpdates);
+        logger.info(`Admins sincronizados...`);
       } catch (error) {
         logger.error("Error procesando group.upsert", { error });
       }
     }
   });
+
+  sock.ev.on(
+    "group-participants.update",
+    async ({ id: groupJid, participants, action }) => {
+      try {
+        if (action !== "promote" && action !== "demote") return;
+
+        const isAdmin = action === "promote";
+        await userService.setAdminStatus(
+          groupJid,
+          participants.map((jid) => ({ whatsappId: jid.id, isAdmin })),
+        );
+        logger.error("Sincronizando usuario...");
+      } catch (error) {
+        logger.error("Error procesando group-participants.update", { error });
+      }
+    },
+  );
 }
 
 async function countMessage(
