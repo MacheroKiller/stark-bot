@@ -95,7 +95,9 @@ export function MessageUpsertEvents(sock: WASocket) {
           groupJid,
           participants.map((jid) => ({ whatsappId: jid.id, isAdmin })),
         );
-        logger.error("Sincronizando usuario...");
+        logger.info(
+          `Usuarios sincronizados en ${groupJid} (${participants.length}): ${action}`,
+        );
       } catch (error) {
         logger.error("Error procesando group-participants.update", { error });
       }
