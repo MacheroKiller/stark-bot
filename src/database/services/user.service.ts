@@ -90,25 +90,41 @@ export class UserService {
   }
 
   /**
-   * Calculates the ranking position of a user based on the total
-   * number of messages sent within the same group.
+   * Finds the user at the specified ranking position within a group.
    *
-   * - Counts users with a higher message total.
-   * - Adds one to determine the user's position.
+   * Rankings are based on the total number of messages sent in descending
+   * order (highest message count first). The first position is `1`; position
+   * `0` is considered invalid.
    *
-   * @param user - User whose position will be calculated.
-   * @returns The user's ranking position.
+   * Returns the user together with their ranking position and total messages.
+   *
+   * @param groupWhatsappId - WhatsApp group identifier.
+   * @param position - Ranking position to retrieve (starting from 1).
+   * @returns The ranked user, or `null` if no user exists at that position.
    */
-  async findPosition(user: User) {
-    return (
-      (await getUserCollection().countDocuments({
-        groupWhatsappId: user.groupWhatsappId,
-        totalMessagesSent: { $gt: user.totalMessagesSent },
-      })) + 1
-    );
+  async findUserByPosition(groupWhatsappId: string, position: number) {
+    if (position < 1) {
+      return null;
+    }
+
+    const user = await getUserCollection()
+      .find({ groupWhatsappId })
+      .sort({ totalMessagesSent: -1 })
+      .skip(position - 1)
+      .limit(1)
+      .next();
+
+    if (!user) {
+      return null;
+    }
+
+    return {
+      ...user,
+      position,
+    };
   }
 
-  async findPositionList(
+  async findUserPositionList(
     groupWhatsappId: string,
     whatsappIds: string[],
   ): Promise<Map<string, number>> {
