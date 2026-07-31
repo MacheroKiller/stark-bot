@@ -4,10 +4,11 @@ import { UserService } from "../../database/services/user.service";
 import { removeLidSuffix } from "../../shared/utils/jid";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
+import type { User } from "../../database/interfaces/user.interface";
 
 export class FindCommand implements CommandHandler {
   command = Commands.FIND;
-  description = "Returns the details of the user";
+  description = "Returns the details of the user or the users";
   private readonly userService = new UserService();
 
   async execute(
@@ -19,22 +20,43 @@ export class FindCommand implements CommandHandler {
     const mentionedJid =
       msgObj?.message?.extendedTextMessage?.contextInfo?.mentionedJid;
     const groupJid = groupSender;
-    const targetJid = mentionedJid?.[0] ?? userSender;
+    const targetJid = mentionedJid ?? [userSender];
 
-    const user = await this.userService.findUser(groupJid, targetJid);
+    const users = await this.userService.findUserList(groupJid, targetJid);
 
-    if (!user) {
-      await sendMessageToGroup(groupJid, `User not found`);
+    if (!users.length) {
+      await sendMessageToGroup(groupJid, "Users not found");
       return;
     }
 
-    const position = await this.userService.findPosition(user);
+    const whatsappIds = users.map((user) => user.whatsappId);
+    const positions = await this.userService.findPositionList(
+      groupJid,
+      whatsappIds,
+    );
 
     await sendMessageToGroup(
       groupJid,
-      `${position}. @${removeLidSuffix(user.whatsappId)} has ${user.totalMessagesSent} messages sent`,
-      [user.whatsappId],
+      this.buildMessage(users, positions),
+      users.map((u) => u.whatsappId),
     );
     return;
+  }
+
+  buildMessage(users: User[], positions: Map<string, number>): string {
+    const lines = users
+      .sort(
+        (a, b) => positions.get(a.whatsappId)! - positions.get(b.whatsappId)!,
+      )
+      .map((user) => {
+        const position = positions.get(user.whatsappId);
+
+        return `${position}. @${removeLidSuffix(user.whatsappId)} has ${
+          user.totalMessagesSent ?? 0
+        } messages sent`;
+      })
+      .join("\n");
+
+    return `${lines}`;
   }
 }
