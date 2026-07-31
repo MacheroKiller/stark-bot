@@ -71,6 +71,25 @@ export class UserService {
   }
 
   /**
+   * Finds a group of users within a WhatsApp group.
+   *
+   * @param groupWhatsappId - WhatsApp group identifier.
+   * @param whatsappId[] - User WhatsApp identifier.
+   * @returns The matching user or null if no user is found.
+   */
+  async findUserList(
+    groupWhatsappId: string,
+    whatsappId: string[],
+  ): Promise<User[]> {
+    return getUserCollection()
+      .find({
+        groupWhatsappId,
+        whatsappId: { $in: whatsappId },
+      })
+      .toArray();
+  }
+
+  /**
    * Calculates the ranking position of a user based on the total
    * number of messages sent within the same group.
    *
@@ -87,6 +106,35 @@ export class UserService {
         totalMessagesSent: { $gt: user.totalMessagesSent },
       })) + 1
     );
+  }
+
+  async findPositionList(
+    groupWhatsappId: string,
+    whatsappIds: string[],
+  ): Promise<Map<string, number>> {
+    const ranking = await getUserCollection()
+      .find({ groupWhatsappId })
+      .sort({ totalMessagesSent: -1 })
+      .project({ whatsappId: 1, totalMessagesSent: 1 })
+      .toArray();
+
+    const positions = new Map<string, number>();
+
+    ranking.forEach((user, index) => {
+      positions.set(user.whatsappId, index + 1);
+    });
+
+    const result = new Map<string, number>();
+
+    for (const whatsappId of whatsappIds) {
+      const position = positions.get(whatsappId);
+
+      if (position !== undefined) {
+        result.set(whatsappId, position);
+      }
+    }
+
+    return result;
   }
 
   /**
