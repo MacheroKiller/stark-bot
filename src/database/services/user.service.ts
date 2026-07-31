@@ -102,7 +102,7 @@ export class UserService {
    * @param position - Ranking position to retrieve (starting from 1).
    * @returns The ranked user, or `null` if no user exists at that position.
    */
-  async findPosition(groupWhatsappId: string, position: number) {
+  async findUserByPosition(groupWhatsappId: string, position: number) {
     if (position < 1) {
       return null;
     }

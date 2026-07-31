@@ -35,7 +35,7 @@ export class FindTopCommand implements CommandHandler {
       return;
     }
 
-    const user = await this.userService.findPosition(
+    const user = await this.userService.findUserByPosition(
       groupSender,
       Number(position),
     );

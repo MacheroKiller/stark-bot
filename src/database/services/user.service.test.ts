@@ -6,11 +6,22 @@ const bulkWrite = mock();
 const countDocuments = mock();
 const findOne = mock();
 
-// find() encadena .sort().limit().toArray() — hay que mockear cada eslabón
+// find() encadena .sort().skip().limit().project().toArray()/.next() —
+// hay que mockear cada eslabón. sort/skip/limit/project devuelven `this`
+// (el propio cursor) para poder encadenar sin reconstruir la cadena en
+// cada test.
 const toArray = mock();
-const limit = mock(() => ({ toArray }));
-const sort = mock(() => ({ limit }));
-const find = mock(() => ({ sort }));
+const next = mock();
+const cursor = {
+  sort: mock().mockReturnThis(),
+  skip: mock().mockReturnThis(),
+  limit: mock().mockReturnThis(),
+  project: mock().mockReturnThis(),
+  toArray,
+  next,
+};
+
+const find = mock(() => cursor);
 
 mock.module("../models/user.model", () => ({
   getUserCollection: () => ({
@@ -46,66 +57,95 @@ describe("UserService.findOrCreateAndIncrement", () => {
   });
 });
 
-describe("UserService.findPosition", () => {
+describe("UserService.findUserByPosition", () => {
   beforeEach(() => {
-    countDocuments.mockReset();
+    find.mockReset();
+    find.mockImplementation(() => cursor);
+
+    cursor.sort.mockClear();
+    cursor.skip.mockClear();
+    cursor.limit.mockClear();
+    next.mockReset();
   });
 
-  test("devuelve 1 cuando nadie tiene más mensajes", async () => {
-    countDocuments.mockResolvedValue(0);
+  test("returns null when position is less than 1", async () => {
+    const service = new UserService();
+
+    const result = await service.findUserByPosition("group-1", 0);
+
+    expect(result).toBeNull();
+    expect(find).not.toHaveBeenCalled();
+  });
+
+  test("returns null when no user exists at the given position", async () => {
+    next.mockResolvedValue(null);
 
     const service = new UserService();
-    const position = await service.findPosition({
+
+    const result = await service.findUserByPosition("group-1", 3);
+
+    expect(result).toBeNull();
+
+    expect(find).toHaveBeenCalledWith({
+      groupWhatsappId: "group-1",
+    });
+
+    expect(cursor.sort).toHaveBeenCalledWith({
+      totalMessagesSent: -1,
+    });
+
+    expect(cursor.skip).toHaveBeenCalledWith(2);
+
+    expect(cursor.limit).toHaveBeenCalledWith(1);
+  });
+
+  test("returns the ranked user", async () => {
+    const fakeUserId = new ObjectId();
+
+    next.mockResolvedValue({
+      _id: fakeUserId,
       whatsappId: "123",
-      groupWhatsappId: "456",
-      totalMessagesSent: 50,
+      groupWhatsappId: "group-1",
+      totalMessagesSent: 42,
       isAdmin: false,
     });
 
-    expect(position).toBe(1);
-    expect(countDocuments).toHaveBeenCalledWith({
-      groupWhatsappId: "456",
-      totalMessagesSent: { $gt: 50 },
-    });
-  });
-
-  test("devuelve N+1 cuando hay N usuarios con más mensajes", async () => {
-    countDocuments.mockResolvedValue(4);
-
     const service = new UserService();
-    const position = await service.findPosition({
-      whatsappId: "123",
-      groupWhatsappId: "456",
-      totalMessagesSent: 10,
-      isAdmin: false,
+
+    const result = await service.findUserByPosition("group-1", 2);
+
+    expect(find).toHaveBeenCalledWith({
+      groupWhatsappId: "group-1",
     });
 
-    expect(position).toBe(5);
-  });
-
-  test("solo cuenta usuarios del mismo grupo", async () => {
-    countDocuments.mockResolvedValue(0);
-
-    const service = new UserService();
-    await service.findPosition({
-      whatsappId: "123",
-      groupWhatsappId: "grupo-A",
-      totalMessagesSent: 10,
-      isAdmin: false,
+    expect(cursor.sort).toHaveBeenCalledWith({
+      totalMessagesSent: -1,
     });
 
-    // el filtro debe usar el groupWhatsappId del usuario, no un valor fijo
-    expect(countDocuments).toHaveBeenCalledWith(
-      expect.objectContaining({ groupWhatsappId: "grupo-A" }),
-    );
+    expect(cursor.skip).toHaveBeenCalledWith(1);
+
+    expect(cursor.limit).toHaveBeenCalledWith(1);
+
+    expect(result).toEqual({
+      _id: fakeUserId,
+      whatsappId: "123",
+      groupWhatsappId: "group-1",
+      totalMessagesSent: 42,
+      isAdmin: false,
+      position: 2,
+    });
   });
 });
 
 describe("UserService.getTopMessageSenders", () => {
   beforeEach(() => {
-    find.mockClear();
-    sort.mockClear();
-    limit.mockClear();
+    find.mockReset();
+    find.mockImplementation(() => cursor);
+
+    cursor.sort.mockClear();
+    cursor.skip.mockClear();
+    cursor.limit.mockClear();
+    cursor.project.mockClear();
     toArray.mockReset();
   });
 
@@ -125,8 +165,8 @@ describe("UserService.getTopMessageSenders", () => {
     const result = await service.getTopMessageSenders("grupo-A");
 
     expect(find).toHaveBeenCalledWith({ groupWhatsappId: "grupo-A" });
-    expect(sort).toHaveBeenCalledWith({ totalMessagesSent: -1 });
-    expect(limit).toHaveBeenCalledWith(5);
+    expect(cursor.sort).toHaveBeenCalledWith({ totalMessagesSent: -1 });
+    expect(cursor.limit).toHaveBeenCalledWith(5);
     expect(result).toEqual(fakeUsers);
   });
 
@@ -216,5 +256,98 @@ describe("UserService.setAdminStatus", () => {
         },
       },
     ]);
+  });
+});
+
+describe("UserService.findUserList", () => {
+  beforeEach(() => {
+    find.mockReset();
+    find.mockImplementation(() => cursor);
+    toArray.mockReset();
+  });
+
+  test("finds users by whatsapp ids", async () => {
+    const users = [
+      {
+        _id: new ObjectId(),
+        whatsappId: "111",
+        groupWhatsappId: "group-1",
+        totalMessagesSent: 10,
+        isAdmin: false,
+      },
+      {
+        _id: new ObjectId(),
+        whatsappId: "222",
+        groupWhatsappId: "group-1",
+        totalMessagesSent: 5,
+        isAdmin: true,
+      },
+    ];
+
+    toArray.mockResolvedValue(users);
+
+    const service = new UserService();
+
+    const result = await service.findUserList("group-1", ["111", "222"]);
+
+    expect(find).toHaveBeenCalledWith({
+      groupWhatsappId: "group-1",
+      whatsappId: {
+        $in: ["111", "222"],
+      },
+    });
+
+    expect(result).toEqual(users);
+  });
+});
+
+describe("UserService.findUserPositionList", () => {
+  beforeEach(() => {
+    find.mockReset();
+    find.mockImplementation(() => cursor);
+    toArray.mockReset();
+
+    cursor.sort.mockClear();
+    cursor.project.mockClear();
+  });
+
+  test("returns the positions of the requested users", async () => {
+    toArray.mockResolvedValue([
+      {
+        whatsappId: "333",
+        totalMessagesSent: 100,
+      },
+      {
+        whatsappId: "111",
+        totalMessagesSent: 90,
+      },
+      {
+        whatsappId: "222",
+        totalMessagesSent: 80,
+      },
+    ]);
+
+    const service = new UserService();
+
+    const result = await service.findUserPositionList("group-1", [
+      "111",
+      "222",
+    ]);
+
+    expect(find).toHaveBeenCalledWith({
+      groupWhatsappId: "group-1",
+    });
+
+    expect(cursor.sort).toHaveBeenCalledWith({
+      totalMessagesSent: -1,
+    });
+
+    expect(cursor.project).toHaveBeenCalledWith({
+      whatsappId: 1,
+      totalMessagesSent: 1,
+    });
+
+    expect(result.get("111")).toBe(2);
+    expect(result.get("222")).toBe(3);
   });
 });
