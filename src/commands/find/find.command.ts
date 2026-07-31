@@ -20,7 +20,8 @@ export class FindCommand implements CommandHandler {
     const mentionedJid =
       msgObj?.message?.extendedTextMessage?.contextInfo?.mentionedJid;
     const groupJid = groupSender;
-    const targetJid = mentionedJid ?? [userSender];
+    const targetJid =
+      mentionedJid && mentionedJid.length > 0 ? mentionedJid : [userSender];
 
     const users = await this.userService.findUserList(groupJid, targetJid);
 
@@ -30,7 +31,7 @@ export class FindCommand implements CommandHandler {
     }
 
     const whatsappIds = users.map((user) => user.whatsappId);
-    const positions = await this.userService.findPositionList(
+    const positions = await this.userService.findUserPositionList(
       groupJid,
       whatsappIds,
     );

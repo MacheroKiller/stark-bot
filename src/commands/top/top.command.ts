@@ -1,10 +1,9 @@
-import type { proto } from "baileys";
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
+import type { User } from "../../database/interfaces/user.interface";
 import { UserService } from "../../database/services/user.service";
+import { removeLidSuffix } from "../../shared/utils/jid";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
-import { removeLidSuffix } from "../../shared/utils/jid";
-import type { User } from "../../database/interfaces/user.interface";
 
 export class TopCommand implements CommandHandler {
   command = Commands.TOP;
