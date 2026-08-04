@@ -5,6 +5,7 @@ const findOneAndUpdate = mock();
 const bulkWrite = mock();
 const countDocuments = mock();
 const findOne = mock();
+const updateMany = mock();
 
 // find() encadena .sort().skip().limit().project().toArray()/.next() —
 // hay que mockear cada eslabón. sort/skip/limit/project devuelven `this`
@@ -30,6 +31,7 @@ mock.module("../models/user.model", () => ({
     countDocuments,
     findOne,
     find,
+    updateMany,
   }),
 }));
 
@@ -349,5 +351,46 @@ describe("UserService.findUserPositionList", () => {
 
     expect(result.get("111")).toBe(2);
     expect(result.get("222")).toBe(3);
+  });
+});
+
+describe("UserService.resetTotalMessagesSent", () => {
+  beforeEach(() => {
+    updateMany.mockReset();
+  });
+
+  test("resetea totalMessagesSent a 0 para todos los usuarios del grupo", async () => {
+    updateMany.mockResolvedValue({ modifiedCount: 7 });
+
+    const service = new UserService();
+    const result = await service.resetTotalMessagesSent("grupo-A");
+
+    expect(updateMany).toHaveBeenCalledWith(
+      { groupWhatsappId: "grupo-A" },
+      { $set: { totalMessagesSent: 0 } },
+    );
+    expect(result).toBe(7);
+  });
+
+  test("no toca ningún otro campo del documento (ej. isAdmin)", async () => {
+    updateMany.mockResolvedValue({ modifiedCount: 3 });
+
+    const service = new UserService();
+    await service.resetTotalMessagesSent("grupo-A");
+
+    const call = updateMany.mock.calls[0];
+    expect(call).toBeDefined();
+
+    const [, updateArg] = call!;
+    expect(updateArg.$set).toEqual({ totalMessagesSent: 0 });
+  });
+
+  test("devuelve 0 si no había usuarios en el grupo", async () => {
+    updateMany.mockResolvedValue({ modifiedCount: 0 });
+
+    const service = new UserService();
+    const result = await service.resetTotalMessagesSent("grupo-vacio");
+
+    expect(result).toBe(0);
   });
 });

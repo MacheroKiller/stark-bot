@@ -182,4 +182,26 @@ export class UserService {
 
     await getUserCollection().bulkWrite(ops);
   }
+
+  /**
+   * Resets the message counter for every user in a WhatsApp group.
+   *
+   * Sets the `totalMessagesSent` field to `0` for all users that belong
+   * to the specified group.
+   *
+   * @param groupWhatsappId - WhatsApp group identifier.
+   * @returns The number of users whose message counter was modified.
+   */
+  async resetTotalMessagesSent(groupWhatsappId: string): Promise<number> {
+    const result = await getUserCollection().updateMany(
+      { groupWhatsappId },
+      {
+        $set: {
+          totalMessagesSent: 0,
+        },
+      },
+    );
+
+    return result.modifiedCount;
+  }
 }
