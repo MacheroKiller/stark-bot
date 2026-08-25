@@ -1,9 +1,8 @@
-import type { proto } from "baileys";
+import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 import { UserService } from "../../database/services/user.service";
 import { removeLidSuffix } from "../../shared/utils/jid";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
-import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 
 export class FindTopCommand implements CommandHandler {
   command = Commands.FINDTOP;
@@ -13,12 +12,10 @@ export class FindTopCommand implements CommandHandler {
   private readonly userService = new UserService();
 
   async execute(
-    _: string,
+    message: string,
     groupSender: string,
     __: string,
-    msgObj?: proto.IWebMessageInfo,
   ): Promise<void> {
-    const message = msgObj?.message?.extendedTextMessage?.text;
     const value = message?.trim().split(" ");
 
     if (!value) return;

@@ -9,7 +9,9 @@ import type { CommandHandler } from "../interfaces/command.interface";
 
 export class BanCommand implements CommandHandler {
   command = Commands.BAN;
+
   description = "Bans a user from the group";
+
   requiresAdmin = true;
 
   private readonly userService = new UserService();
@@ -23,10 +25,7 @@ export class BanCommand implements CommandHandler {
     const targetJid = this.getMentionedUser(msgObj);
 
     if (!targetJid) {
-      await sendMessageToGroup(
-        groupJid,
-        "Menciona al usuario que querés banear.",
-      );
+      await sendMessageToGroup(groupJid, "Mention the user you want to ban.");
       return;
     }
 
@@ -35,7 +34,7 @@ export class BanCommand implements CommandHandler {
     if (user?.isAdmin) {
       await sendMessageToGroup(
         groupJid,
-        "No puedes banear a otro administrador.",
+        "You cannot ban another administrator.",
       );
       return;
     }
@@ -48,7 +47,7 @@ export class BanCommand implements CommandHandler {
 
     await sendMessageToGroup(
       groupJid,
-      `@${removeLidSuffix(targetJid)} fue eliminado del grupo.`,
+      `@${removeLidSuffix(targetJid)} was removed from the group.`,
       [targetJid],
     );
   }
@@ -68,13 +67,16 @@ export class BanCommand implements CommandHandler {
 
       return true;
     } catch (error) {
-      logger.error("Error al banear usuario", {
+      logger.error("Error banning user", {
         error,
         groupJid,
         targetJid,
       });
 
-      await sendMessageToGroup(groupJid, "No soy administrador del grupo");
+      await sendMessageToGroup(
+        groupJid,
+        "I am not an administrator of this group.",
+      );
 
       return false;
     }
