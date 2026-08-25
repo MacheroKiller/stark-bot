@@ -105,7 +105,7 @@ describe("UserService.findUserByPosition", () => {
       whatsappId: "123",
       groupWhatsappId: "group-1",
       totalMessagesSent: 42,
-      isAdmin: { $ne: true },
+      isAdmin: false,
     });
 
     const service = new UserService();
@@ -129,7 +129,7 @@ describe("UserService.findUserByPosition", () => {
       whatsappId: "123",
       groupWhatsappId: "group-1",
       totalMessagesSent: 42,
-      isAdmin: { $ne: true },
+      isAdmin: false,
       position: 2,
     });
   });
@@ -271,14 +271,14 @@ describe("UserService.findUserList", () => {
         whatsappId: "111",
         groupWhatsappId: "group-1",
         totalMessagesSent: 10,
-        isAdmin: { $ne: true },
+        isAdmin: false,
       },
       {
         _id: new ObjectId(),
         whatsappId: "222",
         groupWhatsappId: "group-1",
         totalMessagesSent: 5,
-        isAdmin: { $ne: true },
+        isAdmin: true,
       },
     ];
 
@@ -403,7 +403,7 @@ describe("UserService.resetTotalMessagesSent", () => {
           whatsappId: "111",
           groupWhatsappId: "grupo-A",
           totalMessagesSent: 2,
-          isAdmin: { $ne: true },
+          isAdmin: false,
         },
       ];
       toArray.mockResolvedValue(inactiveUsers);
