@@ -413,7 +413,7 @@ describe("UserService.resetTotalMessagesSent", () => {
 
       expect(find).toHaveBeenCalledWith({
         groupWhatsappId: "grupo-A",
-        isAdmin: false,
+        isAdmin: { $ne: true },
         totalMessagesSent: { $lt: 5 },
       });
       expect(result).toEqual(inactiveUsers);
@@ -429,7 +429,7 @@ describe("UserService.resetTotalMessagesSent", () => {
       // este test detecta que un admin con pocos mensajes podría
       // terminar en la lista de purga
       const [filterArg] = find.mock.calls[0]!;
-      expect(filterArg).toHaveProperty("isAdmin", false);
+      expect(filterArg).toHaveProperty("isAdmin", { $ne: true });
     });
 
     test("devuelve array vacío si nadie está por debajo del umbral", async () => {
