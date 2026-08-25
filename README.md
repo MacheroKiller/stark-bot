@@ -1,5 +1,7 @@
 # stark-bot
 
+![CI](https://github.com/MacheroKiller/stark-bot/actions/workflows/ci.yml/badge.svg)
+
 A lightweight WhatsApp bot built with [Baileys](https://github.com/WhiskeySockets/Baileys) and [Bun](https://bun.com/), backed by MongoDB for persistent group/user data. It's the successor to an earlier Next.js-based bot (`wpp-bot`, now deprecated) — rebuilt from scratch with a leaner runtime, a cleaner command architecture, and no framework overhead it didn't need.
 
 ## Features
@@ -18,12 +20,13 @@ A lightweight WhatsApp bot built with [Baileys](https://github.com/WhiskeySocket
 | Command | Description |
 |---|---|
 | `/ping` | Health check — replies "Pong!" |
-| `/top` | Shows the top message senders in the current group |
 | `/find [@mention]` | Shows a user's message count and ranking position in the group. Defaults to the sender if no one is mentioned. |
 | `/findtop <position>` | Shows whoever holds a given ranking position — e.g. `/findtop 1` returns the top sender. |
+| `/help` | Lists available commands, scoped to what the requesting user can run. |
+| `/top` | Shows the top message senders in the current group. **Admin-only.** |
 | `/reset` | Resets the message counter (`totalMessagesSent`) for the group. **Admin-only.** |
 | `/ban [@mention]` | Removes a user from the group. **Admin-only** — requires the bot itself to be a group admin. |
-| `/help` | Lists available commands — admins see admin-only commands too, regular members don't. |
+| `/purge` | Removes every user with fewer than 5 messages sent, as an inactivity cleanup. **Admin-only.** |
 
 ### Admin role management
 
@@ -51,6 +54,7 @@ src/
 │   ├── findtop/
 │   ├── reset/
 │   ├── ban/
+│   ├── purge/
 │   └── help/
 ├── core/whatsapp/
 │   ├── client.ts                 # Baileys socket lifecycle (connect/reconnect)
@@ -133,6 +137,8 @@ Tests are colocated with the code they cover (e.g. `user.service.ts` next to `us
 
 Individual command handlers (`FindCommand`, `BanCommand`) are next in line.
 
+CI runs on every push via GitHub Actions: `bun test` plus a `tsc --noEmit` type-check, so a red badge above means either a failing test or a type error, not deployment status.
+
 ## Roadmap
 
 - [x] **Dockerfile** for containerized deployment
@@ -141,7 +147,7 @@ Individual command handlers (`FindCommand`, `BanCommand`) are next in line.
 - [x] **Admin role management** (`/ban`, admin sync on join and promote/demote)
 - [x] **Deploy to Railway** to keep the bot running 24/7
 - [x] **`/help` command** listing all available commands and their descriptions
-- [ ] Unit tests for individual command handlers (`FindCommand`, `FindTopCommand`, `ResetCommand`, `BanCommand`, `HelpCommand`)
+- [ ] Unit tests for individual command handlers (`FindCommand`, `FindTopCommand`, `ResetCommand`, `BanCommand`, `PurgeCommand`, `HelpCommand`)
 - [ ] More commands (TBD based on actual group usage/needs)
 - [ ] Centralized environment validation at startup instead of failing on first DB access
 
