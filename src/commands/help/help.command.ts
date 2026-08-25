@@ -1,12 +1,11 @@
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
-import { UserService } from "../../database/services/user.service";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
 
 export class HelpCommand implements CommandHandler {
   command = Commands.HELP;
   description = "Displays help information for the bot.";
-  requiresAdmin?: boolean | undefined = true;
+  requiresAdmin?: boolean | undefined = false;
 
   async execute(_: string, groupSender: string): Promise<void> {
     await sendMessageToGroup(
@@ -20,7 +19,9 @@ export class HelpCommand implements CommandHandler {
         `*Admin-only commands:*\n` +
         `*/top* - _Shows the top message senders in the group_\n` +
         `*/ban* - _Bans a user from the group_\n` +
-        `*/reset* - _Resets all users' message counters_`,
+        `*/reset* - _Resets all users' message counters_\n\n` +
+        `*_Ads:_*\n` +
+        `*_Give me a star ⭐ https://github.com/MacheroKiller/stark-bot_*`,
     );
   }
 }

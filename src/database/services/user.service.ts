@@ -204,4 +204,17 @@ export class UserService {
 
     return result.modifiedCount;
   }
+
+  async findInactiveUsers(
+    groupWhatsappId: string,
+    maxMessages: number,
+  ): Promise<User[]> {
+    return getUserCollection()
+      .find({
+        groupWhatsappId,
+        isAdmin: false,
+        totalMessagesSent: { $lt: maxMessages },
+      })
+      .toArray();
+  }
 }

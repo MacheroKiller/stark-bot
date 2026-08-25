@@ -7,10 +7,6 @@ const countDocuments = mock();
 const findOne = mock();
 const updateMany = mock();
 
-// find() encadena .sort().skip().limit().project().toArray()/.next() —
-// hay que mockear cada eslabón. sort/skip/limit/project devuelven `this`
-// (el propio cursor) para poder encadenar sin reconstruir la cadena en
-// cada test.
 const toArray = mock();
 const next = mock();
 const cursor = {
@@ -392,5 +388,68 @@ describe("UserService.resetTotalMessagesSent", () => {
     const result = await service.resetTotalMessagesSent("grupo-vacio");
 
     expect(result).toBe(0);
+  });
+  describe("UserService.findInactiveUsers", () => {
+    beforeEach(() => {
+      find.mockReset();
+      find.mockImplementation(() => cursor);
+      toArray.mockReset();
+    });
+
+    test("filtra por groupWhatsappId, totalMessagesSent menor al umbral, y excluye admins", async () => {
+      const inactiveUsers = [
+        {
+          _id: new ObjectId(),
+          whatsappId: "111",
+          groupWhatsappId: "grupo-A",
+          totalMessagesSent: 2,
+          isAdmin: false,
+        },
+      ];
+      toArray.mockResolvedValue(inactiveUsers);
+
+      const service = new UserService();
+      const result = await service.findInactiveUsers("grupo-A", 5);
+
+      expect(find).toHaveBeenCalledWith({
+        groupWhatsappId: "grupo-A",
+        isAdmin: false,
+        totalMessagesSent: { $lt: 5 },
+      });
+      expect(result).toEqual(inactiveUsers);
+    });
+
+    test("nunca incluye admins, aunque tengan pocos mensajes", async () => {
+      toArray.mockResolvedValue([]);
+
+      const service = new UserService();
+      await service.findInactiveUsers("grupo-A", 5);
+
+      // regresión: si alguien saca isAdmin: false del filtro,
+      // este test detecta que un admin con pocos mensajes podría
+      // terminar en la lista de purga
+      const [filterArg] = find.mock.calls[0]!;
+      expect(filterArg).toHaveProperty("isAdmin", false);
+    });
+
+    test("devuelve array vacío si nadie está por debajo del umbral", async () => {
+      toArray.mockResolvedValue([]);
+
+      const service = new UserService();
+      const result = await service.findInactiveUsers("grupo-A", 5);
+
+      expect(result).toEqual([]);
+    });
+
+    test("respeta el umbral pasado como parámetro, no un valor fijo", async () => {
+      toArray.mockResolvedValue([]);
+
+      const service = new UserService();
+      await service.findInactiveUsers("grupo-A", 10);
+
+      expect(find).toHaveBeenCalledWith(
+        expect.objectContaining({ totalMessagesSent: { $lt: 10 } }),
+      );
+    });
   });
 });

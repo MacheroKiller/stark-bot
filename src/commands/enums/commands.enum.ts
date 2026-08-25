@@ -5,5 +5,7 @@ export enum Commands {
   FIND = "/find",
   FINDTOP = "/findtop",
   BAN = "/ban",
+  PURGE = "/purge",
   RESET = "/reset",
+  JOB = "/job",
 }
