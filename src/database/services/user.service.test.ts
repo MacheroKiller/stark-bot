@@ -18,7 +18,7 @@ const cursor = {
   next,
 };
 
-const find = mock(() => cursor);
+const find = mock((_filter: Record<string, unknown>) => cursor);
 
 mock.module("../models/user.model", () => ({
   getUserCollection: () => ({
