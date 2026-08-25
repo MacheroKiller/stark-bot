@@ -29,6 +29,7 @@ export class UserService {
         $setOnInsert: {
           whatsappId,
           groupWhatsappId,
+          isAdmin: false,
         },
         $inc: {
           totalMessagesSent: 1,
@@ -212,7 +213,7 @@ export class UserService {
     return getUserCollection()
       .find({
         groupWhatsappId,
-        isAdmin: false,
+        isAdmin: { $ne: true },
         totalMessagesSent: { $lt: maxMessages },
       })
       .toArray();

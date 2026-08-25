@@ -105,7 +105,7 @@ describe("UserService.findUserByPosition", () => {
       whatsappId: "123",
       groupWhatsappId: "group-1",
       totalMessagesSent: 42,
-      isAdmin: false,
+      isAdmin: { $ne: true },
     });
 
     const service = new UserService();
@@ -129,7 +129,7 @@ describe("UserService.findUserByPosition", () => {
       whatsappId: "123",
       groupWhatsappId: "group-1",
       totalMessagesSent: 42,
-      isAdmin: false,
+      isAdmin: { $ne: true },
       position: 2,
     });
   });
@@ -271,14 +271,14 @@ describe("UserService.findUserList", () => {
         whatsappId: "111",
         groupWhatsappId: "group-1",
         totalMessagesSent: 10,
-        isAdmin: false,
+        isAdmin: { $ne: true },
       },
       {
         _id: new ObjectId(),
         whatsappId: "222",
         groupWhatsappId: "group-1",
         totalMessagesSent: 5,
-        isAdmin: true,
+        isAdmin: { $ne: true },
       },
     ];
 
@@ -403,7 +403,7 @@ describe("UserService.resetTotalMessagesSent", () => {
           whatsappId: "111",
           groupWhatsappId: "grupo-A",
           totalMessagesSent: 2,
-          isAdmin: false,
+          isAdmin: { $ne: true },
         },
       ];
       toArray.mockResolvedValue(inactiveUsers);
@@ -413,7 +413,7 @@ describe("UserService.resetTotalMessagesSent", () => {
 
       expect(find).toHaveBeenCalledWith({
         groupWhatsappId: "grupo-A",
-        isAdmin: false,
+        isAdmin: { $ne: true },
         totalMessagesSent: { $lt: 5 },
       });
       expect(result).toEqual(inactiveUsers);
@@ -429,7 +429,7 @@ describe("UserService.resetTotalMessagesSent", () => {
       // este test detecta que un admin con pocos mensajes podría
       // terminar en la lista de purga
       const [filterArg] = find.mock.calls[0]!;
-      expect(filterArg).toHaveProperty("isAdmin", false);
+      expect(filterArg).toHaveProperty("isAdmin", { $ne: true });
     });
 
     test("devuelve array vacío si nadie está por debajo del umbral", async () => {
