@@ -4,6 +4,7 @@ export interface CommandHandler {
   command: string;
   description: string;
   requiresAdmin?: boolean;
+  requiresOwner?: boolean;
   execute(
     message: string,
     groupSender: string,

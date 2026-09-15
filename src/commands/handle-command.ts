@@ -4,6 +4,7 @@ import logger from "../shared/utils/logger";
 import { handlers } from "./command.registry";
 import { sendMessageToGroup } from "../core/whatsapp/send-message";
 import { UserService } from "../database/services/user.service";
+import { isOwner } from "../shared/utils/owner";
 
 export interface ContextMessageDTO {
   senderJid: string;
@@ -11,7 +12,7 @@ export interface ContextMessageDTO {
 }
 
 export class HandleCommand {
-  constructor(private readonly userService: UserService = new UserService()) {}
+  constructor(private readonly userService: UserService = new UserService()) { }
 
   private readonly handlerMap = new Map(handlers.map((h) => [h.command, h]));
 
@@ -25,6 +26,17 @@ export class HandleCommand {
 
     const handler = this.findHandler(command);
     if (!handler) return;
+
+    if (handler.requiresOwner) {
+      if (!isOwner(context.senderJid)) return;
+      await handler.execute(
+        message,
+        context.groupJid,
+        context.senderJid,
+        msgObj,
+      );
+      return;
+    }
 
     if (handler.requiresAdmin) {
       const user = await this.userService.findUser(

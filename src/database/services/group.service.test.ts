@@ -1,6 +1,6 @@
-// src/database/services/group.service.test.ts
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { ObjectId } from "mongodb";
+import type { Group } from "../interfaces/group.interface";
 
 const findOne = mock();
 const findOneAndUpdate = mock();
@@ -21,6 +21,7 @@ describe("GroupService.findByWhatsappId", () => {
       _id: new ObjectId(),
       whatsappId: "123-456@g.us",
       name: "Grupo de prueba",
+      status: "approved" as const,
     };
     findOne.mockResolvedValue(fakeGroup);
 
@@ -47,10 +48,10 @@ describe("GroupService.findOrCreate", () => {
   });
 
   test("usa whatsappId como filtro y hace upsert con returnDocument after", async () => {
-    const group = {
-      _id: new ObjectId(),
+    const group: Group = {
       whatsappId: "123-456@g.us",
       name: "Grupo de prueba",
+      status: "pending",
     };
     findOneAndUpdate.mockResolvedValue(group);
 
@@ -65,7 +66,11 @@ describe("GroupService.findOrCreate", () => {
   });
 
   test("$setOnInsert coloca los campos en la raíz del documento, no anidados", async () => {
-    const group = { whatsappId: "123-456@g.us", name: "Grupo de prueba" };
+    const group: Group = {
+      whatsappId: "123-456@g.us",
+      name: "Grupo de prueba",
+      status: "pending",
+    };
     findOneAndUpdate.mockResolvedValue(group);
 
     const service = new GroupService();
@@ -73,14 +78,91 @@ describe("GroupService.findOrCreate", () => {
 
     const [, updateArg] = findOneAndUpdate.mock.calls[0]!;
 
-    // el bug original (Hallazgo #1) era $setOnInsert: { group } —
-    // este assert falla si alguien lo reintroduce sin querer
     expect(updateArg.$setOnInsert).not.toHaveProperty("group");
     expect(updateArg.$setOnInsert).toEqual(
       expect.objectContaining({
         whatsappId: "123-456@g.us",
         name: "Grupo de prueba",
+        status: "pending",
       }),
     );
+  });
+});
+
+describe("GroupService.updateStatus", () => {
+  beforeEach(() => {
+    findOneAndUpdate.mockReset();
+  });
+
+  test("actualiza status, resolvedBy, y setea resolvedAt", async () => {
+    const updatedGroup = {
+      _id: new ObjectId(),
+      whatsappId: "123-456@g.us",
+      name: "Grupo de prueba",
+      status: "approved" as const,
+      resolvedBy: "573001111111@s.whatsapp.net",
+    };
+    findOneAndUpdate.mockResolvedValue(updatedGroup);
+
+    const service = new GroupService();
+    const result = await service.updateStatus(
+      "123-456@g.us",
+      "approved",
+      "573001111111@s.whatsapp.net",
+    );
+
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      { whatsappId: "123-456@g.us" },
+      {
+        $set: {
+          status: "approved",
+          resolvedAt: expect.any(Date),
+          resolvedBy: "573001111111@s.whatsapp.net",
+        },
+      },
+      { returnDocument: "after" },
+    );
+    expect(result).toEqual(updatedGroup);
+  });
+
+  test("funciona igual para status 'rejected'", async () => {
+    const updatedGroup = {
+      _id: new ObjectId(),
+      whatsappId: "123-456@g.us",
+      name: "Grupo de prueba",
+      status: "rejected" as const,
+    };
+    findOneAndUpdate.mockResolvedValue(updatedGroup);
+
+    const service = new GroupService();
+    await service.updateStatus(
+      "123-456@g.us",
+      "rejected",
+      "573001111111@s.whatsapp.net",
+    );
+
+    expect(findOneAndUpdate).toHaveBeenCalledWith(
+      { whatsappId: "123-456@g.us" },
+      expect.objectContaining({
+        $set: expect.objectContaining({ status: "rejected" }),
+      }),
+      expect.anything(),
+    );
+  });
+
+  test("no toca whatsappId ni name del documento existente", async () => {
+    findOneAndUpdate.mockResolvedValue({});
+
+    const service = new GroupService();
+    await service.updateStatus(
+      "123-456@g.us",
+      "approved",
+      "573001111111@s.whatsapp.net",
+    );
+
+    const [, updateArg] = findOneAndUpdate.mock.calls[0]!;
+
+    expect(updateArg.$set).not.toHaveProperty("whatsappId");
+    expect(updateArg.$set).not.toHaveProperty("name");
   });
 });

@@ -8,6 +8,8 @@ import { GroupService } from "../../../database/services/group.service";
 import { extractChatJid, isGroupJid } from "../../../shared/utils/jid";
 import logger from "../../../shared/utils/logger";
 import { UserService } from "./../../../database/services/user.service";
+import { getOwnerJids, isOwner } from "../../../shared/utils/owner";
+import { sendMessageToGroup } from "../send-message";
 
 /**
  * Listens for incoming WhatsApp messages.
@@ -38,9 +40,24 @@ export function MessageUpsertEvents(sock: WASocket) {
         const context = handleCommand.getContext(msg);
         if (!context) continue;
 
+        if (isCommand && !isFromGroup && isOwner(context.senderJid)) {
+          await handleCommand.handle(trimmedText, context, msg);
+          continue;
+        }
+
         const group = await groupService.findByWhatsappId(context.groupJid);
         if (!group) {
           logger.warn(`Grupo no registrado: ${context.groupJid}`);
+          continue;
+        }
+
+        if (group.status !== "approved") {
+          if (isCommand && group.status === "pending") {
+            await sendMessageToGroup(
+              context.groupJid,
+              "This groups isn't authorized.",
+            );
+          }
           continue;
         }
 
@@ -62,15 +79,26 @@ export function MessageUpsertEvents(sock: WASocket) {
           continue;
         }
 
+        const existing = await groupService.findByWhatsappId(groupInfo.id);
+
         const groupBuild: Group = {
           whatsappId: groupInfo.id,
           name: groupInfo.subject,
+          status: "pending",
+          requestedAt: new Date(),
         };
 
         await groupService.findOrCreate(groupBuild); // Registrar nuevo
         logger.info(
           `Grupo sincronizado: ${groupBuild.whatsappId} (${groupBuild.name})`,
         );
+
+        if (!existing) {
+          await notifyOwnersOfPendingGroup(
+            groupBuild,
+            groupInfo.participants?.length ?? 0,
+          );
+        }
 
         const adminUpdates = (groupInfo.participants ?? []).map((p) => ({
           whatsappId: p.id,
@@ -105,6 +133,22 @@ export function MessageUpsertEvents(sock: WASocket) {
   );
 }
 
+async function notifyOwnersOfPendingGroup(
+  group: Group,
+  participantCount: number,
+) {
+  const text =
+    `Nuevo grupo pendiente de aprobación:\n\n` +
+    `*${group.name}*\n` +
+    `JID: ${group.whatsappId}\n` +
+    `Participantes: ${participantCount}\n\n` +
+    `Para aprobar: /approve ${group.whatsappId}\n` +
+    `Para rechazar: /reject ${group.whatsappId}`;
+
+  for (const ownerJid of getOwnerJids()) {
+    await sendMessageToGroup(ownerJid, text); // sendMessage funciona igual para DMs
+  }
+}
 async function countMessage(
   group: Group,
   context: ContextMessageDTO,

@@ -1,4 +1,4 @@
-import type { Group } from "../interfaces/group.interface";
+import type { Group, GroupStatus } from "../interfaces/group.interface";
 import { getGroupCollection } from "../models/group.model";
 
 /**
@@ -35,6 +35,18 @@ export class GroupService {
         $setOnInsert: { ...group },
       },
       { upsert: true, returnDocument: "after" },
+    );
+  }
+
+  async updateStatus(
+    whatsappId: string,
+    status: GroupStatus,
+    resolvedBy: string,
+  ) {
+    return getGroupCollection().findOneAndUpdate(
+      { whatsappId },
+      { $set: { status, resolvedAt: new Date(), resolvedBy } },
+      { returnDocument: "after" },
     );
   }
 }

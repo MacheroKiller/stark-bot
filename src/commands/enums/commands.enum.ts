@@ -8,4 +8,6 @@ export enum Commands {
   PURGE = "/purge",
   RESET = "/reset",
   JOB = "/job",
+  APPROVE = "/approve",
+  REJECT = "/reject",
 }
