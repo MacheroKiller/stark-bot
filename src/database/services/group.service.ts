@@ -1,4 +1,8 @@
-import type { Group, GroupStatus } from "../interfaces/group.interface";
+import type {
+  CommandOverride,
+  Group,
+  GroupStatus,
+} from "../interfaces/group.interface";
 import { getGroupCollection } from "../models/group.model";
 
 /**
@@ -46,6 +50,18 @@ export class GroupService {
     return getGroupCollection().findOneAndUpdate(
       { whatsappId },
       { $set: { status, resolvedAt: new Date(), resolvedBy } },
+      { returnDocument: "after" },
+    );
+  }
+
+  async setCommandOverride(
+    whatsappId: string,
+    command: string,
+    override: CommandOverride,
+  ) {
+    return getGroupCollection().findOneAndUpdate(
+      { whatsappId },
+      { $set: { [`commandOverrides.${command}`]: override } },
       { returnDocument: "after" },
     );
   }

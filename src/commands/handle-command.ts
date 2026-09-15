@@ -5,6 +5,17 @@ import { handlers } from "./command.registry";
 import { sendMessageToGroup } from "../core/whatsapp/send-message";
 import { UserService } from "../database/services/user.service";
 import { isOwner } from "../shared/utils/owner";
+import { GlobalCommandConfigService } from "../database/services/globalCommandConfig.service";
+import { GroupService } from "../database/services/group.service";
+import { Commands } from "./enums/commands.enum";
+
+const GLOBAL_DISABLE_EXEMPT: string[] = [
+  Commands.APPROVE,
+  Commands.REJECT,
+  Commands.GROUPCONFIG,
+  Commands.GLOBALDISABLE,
+  Commands.GLOBALENABLE,
+];
 
 export interface ContextMessageDTO {
   senderJid: string;
@@ -12,8 +23,11 @@ export interface ContextMessageDTO {
 }
 
 export class HandleCommand {
-  constructor(private readonly userService: UserService = new UserService()) { }
-
+  constructor(
+    private readonly userService: UserService = new UserService(),
+    private readonly groupService: GroupService = new GroupService(),
+    private readonly globalCommandConfigService: GlobalCommandConfigService = new GlobalCommandConfigService(),
+  ) { }
   private readonly handlerMap = new Map(handlers.map((h) => [h.command, h]));
 
   async handle(
@@ -27,6 +41,13 @@ export class HandleCommand {
     const handler = this.findHandler(command);
     if (!handler) return;
 
+    if (!GLOBAL_DISABLE_EXEMPT.includes(handler.command)) {
+      const globalConfig = await this.globalCommandConfigService.findByCommand(
+        handler.command,
+      );
+      if (globalConfig && !globalConfig.enabled) return;
+    }
+
     if (handler.requiresOwner) {
       if (!isOwner(context.senderJid)) return;
       await handler.execute(
@@ -38,7 +59,16 @@ export class HandleCommand {
       return;
     }
 
-    if (handler.requiresAdmin) {
+    const group = await this.groupService.findByWhatsappId(context.groupJid);
+    const override = group?.commandOverrides?.[handler.command];
+
+    if (override && !override.enabled) return;
+
+    const requiresAdmin = handler.locked
+      ? (handler.requiresAdmin ?? false)
+      : (override?.requiresAdmin ?? handler.requiresAdmin ?? false);
+
+    if (requiresAdmin) {
       const user = await this.userService.findUser(
         context.groupJid,
         context.senderJid,

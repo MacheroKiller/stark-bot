@@ -2,6 +2,9 @@ import { ApproveCommand } from "./approve/approve.command";
 import { BanCommand } from "./ban/ban.command";
 import { FindCommand } from "./find/find.command";
 import { FindTopCommand } from "./findTop/findTop.command";
+import { GlobalDisableCommand } from "./globalDisable/globalDisable.command";
+import { GlobalEnableCommand } from "./globalEnable/globalEnable.command";
+import { GroupConfigCommand } from "./groupConfig/groupConfig.command";
 import { HelpCommand } from "./help/help.command";
 import type { CommandHandler } from "./interfaces/command.interface";
 import { JobCommand } from "./job/job.command";
@@ -23,4 +26,7 @@ export const handlers: CommandHandler[] = [
   new PurgeCommand(),
   new ApproveCommand(),
   new RejectCommand(),
+  new GlobalDisableCommand(),
+  new GlobalEnableCommand(),
+  new GroupConfigCommand(),
 ];

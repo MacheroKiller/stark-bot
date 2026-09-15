@@ -10,4 +10,7 @@ export enum Commands {
   JOB = "/job",
   APPROVE = "/approve",
   REJECT = "/reject",
+  GROUPCONFIG = "/groupconfig",
+  GLOBALDISABLE = "/globaldisable",
+  GLOBALENABLE = "/globalenable",
 }

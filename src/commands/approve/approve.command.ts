@@ -13,7 +13,7 @@ export class ApproveCommand implements CommandHandler {
 
   async execute(
     message: string,
-    groupSender: string, // acá es el JID del chat con el OWNER (DM)
+    groupSender: string,
     userSender: string,
     _msgObj?: proto.IWebMessageInfo,
   ): Promise<void> {
