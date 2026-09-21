@@ -1,4 +1,4 @@
-import type { ILogger } from "../shared/utils/logger";
+import type { ILogger } from "../shared/utils/logger/logger";
 import { getMongoClient } from "./mongo";
 
 export async function initDatabase(logger: ILogger): Promise<void> {

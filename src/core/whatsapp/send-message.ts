@@ -1,5 +1,5 @@
 import { type WAMessage, type WASocket } from "baileys";
-import logger from "../../shared/utils/logger";
+import logger from "../../shared/utils/logger/logger";
 import { whatsappClient } from "./client";
 
 /**
@@ -22,7 +22,7 @@ async function simulateTyping(jid: string, duration = 2000) {
 
 /**
  * Sends a message to a WhatsApp group.
- * Stores the message as pending if delivery fails and it's not already a retry.
+ *
  */
 export async function sendMessageToGroup(
   whatsappId: string,
@@ -31,10 +31,6 @@ export async function sendMessageToGroup(
   quoted?: WAMessage,
 ) {
   socket = whatsappClient.getSocket();
-  if (!socket) {
-    logger.error("❌ WhatsApp socket not initialized");
-    return;
-  }
 
   if (!whatsappId || !message) {
     logger.error("❌ Invalid whatsappId or message");

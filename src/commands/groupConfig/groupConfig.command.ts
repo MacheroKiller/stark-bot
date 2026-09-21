@@ -6,10 +6,14 @@ import type { CommandHandler } from "../interfaces/command.interface";
 
 export class GroupConfigCommand implements CommandHandler {
   command = Commands.GROUPCONFIG;
-  description = "Configura un comando para un grupo específico (OWNER)";
+  description = "Configures a command for a specific group (OWNER)";
   requiresOwner = true;
 
   private readonly groupService = new GroupService();
+
+  // ---
+  // Command execution
+  // ---
 
   async execute(message: string, groupSender: string): Promise<void> {
     const [, targetGroupJid, targetCommand, action, adminFlag] = message
@@ -19,16 +23,20 @@ export class GroupConfigCommand implements CommandHandler {
     if (!targetGroupJid || !targetCommand || !action) {
       await sendMessageToGroup(
         groupSender,
-        "Uso: /groupconfig <groupJid> <comando> <enable|disable> [requiresAdmin|public]",
+        "Usage: /groupconfig <groupJid> <command> <enable|disable> [requireAdmin|public]",
       );
       return;
     }
+
+    // ---
+    // Command lookup and validation
+    // ---
 
     const targetHandler = handlers.find((h) => h.command === targetCommand);
     if (!targetHandler) {
       await sendMessageToGroup(
         groupSender,
-        `Comando desconocido: ${targetCommand}`,
+        `Unknown command: ${targetCommand}`,
       );
       return;
     }
@@ -36,10 +44,14 @@ export class GroupConfigCommand implements CommandHandler {
     if (targetHandler.locked && adminFlag) {
       await sendMessageToGroup(
         groupSender,
-        `${targetCommand} está bloqueado — su nivel de acceso no se puede reconfigurar.`,
+        `${targetCommand} is locked — its access level cannot be reconfigured.`,
       );
       return;
     }
+
+    // ---
+    // Group command configuration
+    // ---
 
     await this.groupService.setCommandOverride(targetGroupJid, targetCommand, {
       enabled: action === "enable",
@@ -53,7 +65,7 @@ export class GroupConfigCommand implements CommandHandler {
 
     await sendMessageToGroup(
       groupSender,
-      `Configuración actualizada para ${targetCommand} en ${targetGroupJid}.`,
+      `Configuration updated for ${targetCommand} in ${targetGroupJid}.`,
     );
   }
 }

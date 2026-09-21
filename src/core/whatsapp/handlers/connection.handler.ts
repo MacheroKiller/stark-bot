@@ -1,6 +1,6 @@
 import { Boom } from "@hapi/boom";
 import { DisconnectReason, type WASocket } from "baileys";
-import logger from "../../../shared/utils/logger";
+import logger from "../../../shared/utils/logger/logger";
 import QRCode from "qrcode";
 
 /**

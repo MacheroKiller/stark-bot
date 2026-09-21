@@ -6,10 +6,14 @@ import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 
 export class ApproveCommand implements CommandHandler {
   command = Commands.APPROVE;
-  description = "Aprueba un grupo pendiente de registro (OWNER)";
+  description = "Approves a pending group registration (OWNER)";
   requiresOwner = true;
 
   private readonly groupService = new GroupService();
+
+  // ---
+  // Command execution
+  // ---
 
   async execute(
     message: string,
@@ -20,23 +24,31 @@ export class ApproveCommand implements CommandHandler {
     const [, targetGroupJid] = message.trim().split(/\s+/);
 
     if (!targetGroupJid) {
-      await sendMessageToGroup(groupSender, "Uso: /approve <groupJid>");
+      await sendMessageToGroup(groupSender, "Usage: /approve <groupJid>");
       return;
     }
+
+    // ---
+    // Target group lookup
+    // ---
 
     const group = await this.groupService.findByWhatsappId(targetGroupJid);
     if (!group) {
       await sendMessageToGroup(
         groupSender,
-        `No encontré un grupo con ese JID: ${targetGroupJid}`,
+        `No group found with this JID: ${targetGroupJid}`,
       );
       return;
     }
 
     if (group.status === "approved") {
-      await sendMessageToGroup(groupSender, "Ese grupo ya estaba aprobado.");
+      await sendMessageToGroup(groupSender, "This group is already approved.");
       return;
     }
+
+    // ---
+    // Group approval
+    // ---
 
     await this.groupService.updateStatus(
       targetGroupJid,
@@ -46,11 +58,11 @@ export class ApproveCommand implements CommandHandler {
 
     await sendMessageToGroup(
       groupSender,
-      `Grupo aprobado: ${group.name} (${targetGroupJid})`,
+      `Group approved: ${group.name} (${targetGroupJid})`,
     );
     await sendMessageToGroup(
       targetGroupJid,
-      "¡Hola! Este grupo ya fue aprobado. Usá /help para ver los comandos disponibles.",
+      "Hello! This group has been approved. Use /help to see the available commands.",
     );
   }
 }

@@ -16,4 +16,6 @@ export interface Group {
   resolvedAt?: Date;
   resolvedBy?: string;
   commandOverrides?: Record<string, CommandOverride>;
+  lastResetAt?: Date;
+  isAnnouncementOnly?: boolean;
 }

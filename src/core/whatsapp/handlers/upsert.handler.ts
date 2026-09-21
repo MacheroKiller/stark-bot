@@ -5,11 +5,12 @@ import {
 } from "../../../commands/handle-command";
 import type { Group } from "../../../database/interfaces/group.interface";
 import { GroupService } from "../../../database/services/group.service";
-import { extractChatJid, isGroupJid } from "../../../shared/utils/jid";
-import logger from "../../../shared/utils/logger";
+import { extractChatJid, isGroupJid } from "../../../shared/utils/jid/jid";
+import logger from "../../../shared/utils/logger/logger";
 import { UserService } from "./../../../database/services/user.service";
-import { getOwnerJids, isOwner } from "../../../shared/utils/owner";
+import { getOwnerJids, isOwner } from "../../../shared/utils/owner/owner";
 import { sendMessageToGroup } from "../send-message";
+import { isGroupAllowedInCurrentEnv } from "../../../shared/utils/env/env";
 
 /**
  * Listens for incoming WhatsApp messages.
@@ -40,6 +41,9 @@ export function MessageUpsertEvents(sock: WASocket) {
         const context = handleCommand.getContext(msg);
         if (!context) continue;
 
+        if (isFromGroup && !isGroupAllowedInCurrentEnv(context.groupJid))
+          continue;
+
         if (isCommand && !isFromGroup && isOwner(context.senderJid)) {
           await handleCommand.handle(trimmedText, context, msg);
           continue;
@@ -61,7 +65,8 @@ export function MessageUpsertEvents(sock: WASocket) {
           continue;
         }
 
-        if (isFromGroup) await countMessage(group, context, userService);
+        if (isFromGroup && !group.isAnnouncementOnly)
+          await countMessage(group, context, userService);
         if (isCommand) await handleCommand.handle(trimmedText, context, msg);
       } catch (error) {
         logger.error("Error procesando mensaje individual en messages.upsert", {
@@ -116,16 +121,27 @@ export function MessageUpsertEvents(sock: WASocket) {
     "group-participants.update",
     async ({ id: groupJid, participants, action }) => {
       try {
-        if (action !== "promote" && action !== "demote") return;
+        const idUserList = participants.map((whatssapId) => whatssapId.id);
 
-        const isAdmin = action === "promote";
-        await userService.setAdminStatus(
-          groupJid,
-          participants.map((jid) => ({ whatsappId: jid.id, isAdmin })),
-        );
-        logger.info(
-          `Usuarios sincronizados en ${groupJid} (${participants.length}): ${action}`,
-        );
+        if (action === "promote" || action === "demote") {
+          const isAdmin = action === "promote";
+          await userService.setAdminStatus(
+            groupJid,
+            idUserList.map((whatsappId) => ({ whatsappId, isAdmin })),
+          );
+          logger.info(
+            `Usuarios sincronizados en ${groupJid} (${participants.length}): ${action}`,
+          );
+          return;
+        }
+
+        if (action === "remove") {
+          await userService.deleteUsers(groupJid, idUserList);
+          logger.info(
+            `Usuarios eliminados de la BD en ${groupJid} (${participants.length})`,
+          );
+          return;
+        }
       } catch (error) {
         logger.error("Error procesando group-participants.update", { error });
       }
@@ -146,7 +162,7 @@ async function notifyOwnersOfPendingGroup(
     `Para rechazar: /reject ${group.whatsappId}`;
 
   for (const ownerJid of getOwnerJids()) {
-    await sendMessageToGroup(ownerJid, text); // sendMessage funciona igual para DMs
+    await sendMessageToGroup(ownerJid, text);
   }
 }
 async function countMessage(

@@ -13,4 +13,5 @@ export enum Commands {
   GROUPCONFIG = "/groupconfig",
   GLOBALDISABLE = "/globaldisable",
   GLOBALENABLE = "/globalenable",
+  SETMESSAGES = "/setmessage",
 }

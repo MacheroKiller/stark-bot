@@ -5,6 +5,10 @@ export class GlobalCommandConfigService {
     return getGlobalCommandConfigCollection().findOne({ command });
   }
 
+  async findAll() {
+    return getGlobalCommandConfigCollection().find({}).toArray();
+  }
+
   async disable(command: string, disabledBy: string, reason?: string) {
     return getGlobalCommandConfigCollection().findOneAndUpdate(
       { command },
@@ -30,5 +34,19 @@ export class GlobalCommandConfigService {
       },
       { upsert: true, returnDocument: "after" },
     );
+  }
+
+  async seedDefaults(commands: string[]) {
+    if (commands.length === 0) return;
+
+    const ops = commands.map((command) => ({
+      updateOne: {
+        filter: { command },
+        update: { $setOnInsert: { command, enabled: true } },
+        upsert: true,
+      },
+    }));
+
+    await getGlobalCommandConfigCollection().bulkWrite(ops);
   }
 }

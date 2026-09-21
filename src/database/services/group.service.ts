@@ -65,4 +65,12 @@ export class GroupService {
       { returnDocument: "after" },
     );
   }
+
+  async setLastResetAt(whatsappId: string, date: Date = new Date()) {
+    return getGroupCollection().findOneAndUpdate(
+      { whatsappId },
+      { $set: { lastResetAt: date } },
+      { returnDocument: "after" },
+    );
+  }
 }

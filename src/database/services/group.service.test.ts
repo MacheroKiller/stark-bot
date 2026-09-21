@@ -165,4 +165,33 @@ describe("GroupService.updateStatus", () => {
     expect(updateArg.$set).not.toHaveProperty("whatsappId");
     expect(updateArg.$set).not.toHaveProperty("name");
   });
+  describe("GroupService.setLastResetAt", () => {
+    beforeEach(() => {
+      findOneAndUpdate.mockReset();
+    });
+
+    test("setea lastResetAt con la fecha dada", async () => {
+      const fixedDate = new Date("2026-01-01T00:00:00Z");
+      findOneAndUpdate.mockResolvedValue({});
+
+      const service = new GroupService();
+      await service.setLastResetAt("123-456@g.us", fixedDate);
+
+      expect(findOneAndUpdate).toHaveBeenCalledWith(
+        { whatsappId: "123-456@g.us" },
+        { $set: { lastResetAt: fixedDate } },
+        { returnDocument: "after" },
+      );
+    });
+
+    test("usa new Date() por defecto si no se pasa fecha", async () => {
+      findOneAndUpdate.mockResolvedValue({});
+
+      const service = new GroupService();
+      await service.setLastResetAt("123-456@g.us");
+
+      const [, updateArg] = findOneAndUpdate.mock.calls[0]!;
+      expect(updateArg.$set.lastResetAt).toBeInstanceOf(Date);
+    });
+  });
 });

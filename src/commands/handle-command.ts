@@ -1,10 +1,10 @@
 import type { proto } from "baileys";
-import { extractSenderJid } from "../shared/utils/jid";
-import logger from "../shared/utils/logger";
+import { extractSenderJid } from "../shared/utils/jid/jid";
+import logger from "../shared/utils/logger/logger";
 import { handlers } from "./command.registry";
 import { sendMessageToGroup } from "../core/whatsapp/send-message";
 import { UserService } from "../database/services/user.service";
-import { isOwner } from "../shared/utils/owner";
+import { isOwner } from "../shared/utils/owner/owner";
 import { GlobalCommandConfigService } from "../database/services/globalCommandConfig.service";
 import { GroupService } from "../database/services/group.service";
 import { Commands } from "./enums/commands.enum";

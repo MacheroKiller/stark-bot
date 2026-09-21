@@ -12,6 +12,7 @@ import { PingCommand } from "./ping/ping.command";
 import { PurgeCommand } from "./purge/purge.command";
 import { RejectCommand } from "./reject/reject.command";
 import { ResetCommand } from "./reset/reset.command";
+import { SetMessagesCommand } from "./setMessages/setMessages.command";
 import { TopCommand } from "./top/top.command";
 
 export const handlers: CommandHandler[] = [
@@ -29,4 +30,5 @@ export const handlers: CommandHandler[] = [
   new GlobalDisableCommand(),
   new GlobalEnableCommand(),
   new GroupConfigCommand(),
+  new SetMessagesCommand(),
 ];
