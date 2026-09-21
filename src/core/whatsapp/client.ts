@@ -6,7 +6,7 @@ import makeWASocket, {
   useMultiFileAuthState,
   type WASocket,
 } from "baileys";
-import logger from "../../shared/utils/logger";
+import logger from "../../shared/utils/logger/logger";
 import * as path from "path";
 import { mkdir } from "fs/promises";
 import pino from "pino";
@@ -31,7 +31,7 @@ export class WhatsAppClient {
   }
 
   async createAuthFolder(): Promise<void> {
-    await mkdir(this.authFolder, { recursive: true }).catch(() => {});
+    await mkdir(this.authFolder, { recursive: true }).catch(() => { });
   }
 
   async init(): Promise<void> {

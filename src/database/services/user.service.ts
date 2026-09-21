@@ -218,4 +218,28 @@ export class UserService {
       })
       .toArray();
   }
+
+  async deleteUsers(groupWhatsappId: string, whatsappIds: string[]) {
+    if (whatsappIds.length === 0) return { deletedCount: 0 };
+
+    return getUserCollection().deleteMany({
+      groupWhatsappId,
+      whatsappId: { $in: whatsappIds },
+    });
+  }
+
+  async setTotalMessagesSent(
+    groupWhatsappId: string,
+    whatsappId: string,
+    value: number,
+  ) {
+    return getUserCollection().updateOne(
+      { whatsappId, groupWhatsappId },
+      {
+        $set: { totalMessagesSent: value },
+        $setOnInsert: { whatsappId, groupWhatsappId, isAdmin: false },
+      },
+      { upsert: true },
+    );
+  }
 }

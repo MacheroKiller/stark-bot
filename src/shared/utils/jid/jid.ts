@@ -10,7 +10,7 @@ export function extractChatJid(msg: proto.IWebMessageInfo): string {
 export function extractSenderJid(
   msg: proto.IWebMessageInfo,
 ): string | undefined {
-  return msg?.key?.participant ?? msg?.key?.remoteJid ?? undefined;
+  return msg?.key?.participant || msg?.key?.remoteJid || undefined;
 }
 
 /**

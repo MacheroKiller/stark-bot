@@ -1,7 +1,7 @@
 import type { proto } from "baileys";
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 import { UserService } from "../../database/services/user.service";
-import { removeLidSuffix } from "../../shared/utils/jid";
+import { removeLidSuffix } from "../../shared/utils/jid/jid";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
 import type { User } from "../../database/interfaces/user.interface";
@@ -52,9 +52,8 @@ export class FindCommand implements CommandHandler {
       .map((user) => {
         const position = positions.get(user.whatsappId);
 
-        return `${position}. @${removeLidSuffix(user.whatsappId)} has ${
-          user.totalMessagesSent ?? 0
-        } messages sent`;
+        return `${position}. @${removeLidSuffix(user.whatsappId)} has ${user.totalMessagesSent ?? 0
+          } messages sent`;
       })
       .join("\n");
 

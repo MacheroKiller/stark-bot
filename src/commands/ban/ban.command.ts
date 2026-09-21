@@ -2,17 +2,16 @@ import type { proto } from "baileys";
 import { whatsappClient } from "../../core/whatsapp/client";
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 import { UserService } from "../../database/services/user.service";
-import { removeLidSuffix } from "../../shared/utils/jid";
-import logger from "../../shared/utils/logger";
+import { removeLidSuffix } from "../../shared/utils/jid/jid";
+import logger from "../../shared/utils/logger/logger";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
 
 export class BanCommand implements CommandHandler {
   command = Commands.BAN;
-
   description = "Bans a user from the group";
-
   requiresAdmin = true;
+  locked?: boolean | undefined = true;
 
   private readonly userService = new UserService();
 

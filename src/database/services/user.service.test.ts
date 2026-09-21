@@ -6,6 +6,8 @@ const bulkWrite = mock();
 const countDocuments = mock();
 const findOne = mock();
 const updateMany = mock();
+const updateOne = mock();
+const deleteMany = mock();
 
 const toArray = mock();
 const next = mock();
@@ -28,6 +30,8 @@ mock.module("../models/user.model", () => ({
     findOne,
     find,
     updateMany,
+    updateOne,
+    deleteMany,
   }),
 }));
 
@@ -449,6 +453,59 @@ describe("UserService.resetTotalMessagesSent", () => {
 
       expect(find).toHaveBeenCalledWith(
         expect.objectContaining({ totalMessagesSent: { $lt: 10 } }),
+      );
+    });
+  });
+
+  describe("UserService.deleteUsers", () => {
+    beforeEach(() => {
+      deleteMany.mockReset();
+    });
+
+    test("borra por groupWhatsappId y whatsappId $in", async () => {
+      deleteMany.mockResolvedValue({ deletedCount: 2 });
+
+      const service = new UserService();
+      const result = await service.deleteUsers("grupo-A", ["111", "222"]);
+
+      expect(deleteMany).toHaveBeenCalledWith({
+        groupWhatsappId: "grupo-A",
+        whatsappId: { $in: ["111", "222"] },
+      });
+      expect(result).toEqual({ deletedCount: 2 });
+    });
+
+    test("no llama a Mongo si el array de whatsappIds está vacío", async () => {
+      const service = new UserService();
+      const result = await service.deleteUsers("grupo-A", []);
+
+      expect(deleteMany).not.toHaveBeenCalled();
+      expect(result).toEqual({ deletedCount: 0 });
+    });
+  });
+
+  describe("UserService.setTotalMessagesSent", () => {
+    beforeEach(() => {
+      updateOne.mockReset();
+    });
+
+    test("setea totalMessagesSent y hace upsert con isAdmin=false en el insert", async () => {
+      updateOne.mockResolvedValue({ acknowledged: true });
+
+      const service = new UserService();
+      await service.setTotalMessagesSent("grupo-A", "111", 100);
+
+      expect(updateOne).toHaveBeenCalledWith(
+        { whatsappId: "111", groupWhatsappId: "grupo-A" },
+        {
+          $set: { totalMessagesSent: 100 },
+          $setOnInsert: {
+            whatsappId: "111",
+            groupWhatsappId: "grupo-A",
+            isAdmin: false,
+          },
+        },
+        { upsert: true },
       );
     });
   });
