@@ -8,33 +8,36 @@ import { getGroupSummaryConfigCollection } from "../../models/groupSummaryConfig
  * A document existing for a group IS the enabled state — see
  * GroupSummaryConfig for why there is no separate `enabled` field.
  *
- * NOTE: this service holds in-memory state (the enabled-groups cache), so
- * it must be registered as a SINGLETON in the DI container. A new instance
- * per use would reset the cache constantly and defeat its purpose.
+ * IMPORTANT — module-scoped cache, not instance-scoped:
+ * This codebase instantiates services freely with `new X()` wherever
+ * they're needed (HandleCommand's default constructor params,
+ * MessageUpsertEvents, etc.) — there's no DI container handing out a single
+ * shared instance. A normal `private` class field would mean every
+ * `new GroupSummaryConfigService()` gets its OWN cache, so a write from one
+ * instance (e.g. the /setsummaryprompt command) would never be visible to
+ * another instance's isEnabled() check (e.g. the messages.upsert handler).
+ *
+ * The cache therefore lives at MODULE scope: every instance in the process
+ * reads and writes the same Set.
  */
+let enabledGroupIds = new Set<string>();
+
 export class GroupSummaryConfigService {
   /**
-   * In-memory cache of enabled groupWhatsappId values. Checked on the hot
-   * path of every incoming message (see MessageHistoryService.record call
-   * site in the messages.upsert handler), so it cannot be a database query
-   * per message — it has to be O(1) in memory.
-   */
-  private enabledGroupIds = new Set<string>();
-
-  /**
-   * Populates the in-memory cache from the database.
+   * Populates the module-level cache from the database.
    *
    * Must be called once during bootstrap, after initDatabase and before
-   * the WhatsApp socket starts receiving messages — otherwise every
-   * message arriving before this resolves would be treated as "not
-   * enabled" and silently skipped.
+   * the WhatsApp client starts — otherwise every message arriving before
+   * this resolves would be treated as "not enabled" and silently skipped.
+   * Safe to call again later to force a refresh (e.g. after editing Mongo
+   * by hand).
    */
   async loadCache(): Promise<void> {
     const docs = await getGroupSummaryConfigCollection()
       .find({}, { projection: { groupWhatsappId: 1 } })
       .toArray();
 
-    this.enabledGroupIds = new Set(docs.map((doc) => doc.groupWhatsappId));
+    enabledGroupIds = new Set(docs.map((doc) => doc.groupWhatsappId));
   }
 
   /**
@@ -44,7 +47,15 @@ export class GroupSummaryConfigService {
    * @param groupWhatsappId - WhatsApp group identifier.
    */
   isEnabled(groupWhatsappId: string): boolean {
-    return this.enabledGroupIds.has(groupWhatsappId);
+    return enabledGroupIds.has(groupWhatsappId);
+  }
+
+  /**
+   * Returns every group that has weekly summaries configured.
+   * Used by the scheduler to decide which groups to process.
+   */
+  async findAll(): Promise<GroupSummaryConfig[]> {
+    return getGroupSummaryConfigCollection().find({}).toArray();
   }
 
   /**
@@ -85,11 +96,11 @@ export class GroupSummaryConfigService {
       { upsert: true },
     );
 
-    this.enabledGroupIds.add(groupWhatsappId);
+    enabledGroupIds.add(groupWhatsappId);
   }
 
   /**
-   * Records that a weekly summary was just generated for a group.
+   * Records that a weekly summary was just generated and sent for a group.
    *
    * @param groupWhatsappId - WhatsApp group identifier.
    * @param when - Timestamp to record. Defaults to now.

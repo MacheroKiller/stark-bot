@@ -6,7 +6,7 @@ import { GroupService } from "./group.service";
 const findOne = mock();
 const findOneAndUpdate = mock();
 
-mock.module("../models/group.model", () => ({
+mock.module("../../models/group.model", () => ({
   getGroupCollection: () => ({ findOne, findOneAndUpdate }),
 }));
 

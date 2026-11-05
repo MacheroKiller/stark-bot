@@ -22,7 +22,7 @@ const cursor = {
 
 const find = mock((_filter: Record<string, unknown>) => cursor);
 
-mock.module("../models/user.model", () => ({
+mock.module("../../models/user.model", () => ({
   getUserCollection: () => ({
     findOneAndUpdate,
     bulkWrite,

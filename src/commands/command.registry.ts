@@ -13,6 +13,7 @@ import { PurgeCommand } from "./purge/purge.command";
 import { RejectCommand } from "./reject/reject.command";
 import { ResetCommand } from "./reset/reset.command";
 import { SetMessagesCommand } from "./setMessages/setMessages.command";
+import { SetSummaryPromptCommand } from "./setSummaryPrompt/setSummaryPrompt.command";
 import { TopCommand } from "./top/top.command";
 
 export const handlers: CommandHandler[] = [
@@ -31,4 +32,5 @@ export const handlers: CommandHandler[] = [
   new GlobalEnableCommand(),
   new GroupConfigCommand(),
   new SetMessagesCommand(),
+  new SetSummaryPromptCommand(),
 ];

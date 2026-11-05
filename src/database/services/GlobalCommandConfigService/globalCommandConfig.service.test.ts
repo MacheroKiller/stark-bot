@@ -4,12 +4,12 @@ import { ObjectId } from "mongodb";
 const findOne = mock();
 const findOneAndUpdate = mock();
 
-mock.module("../models/globalCommandConfig.model", () => ({
+mock.module("../../models/globalCommandConfig.model", () => ({
   getGlobalCommandConfigCollection: () => ({ findOne, findOneAndUpdate }),
 }));
 
 const { GlobalCommandConfigService } =
-  await import("../globalCommandConfig.service");
+  await import("./globalCommandConfig.service");
 
 describe("GlobalCommandConfigService.findByCommand", () => {
   beforeEach(() => {
