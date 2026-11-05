@@ -1,4 +1,4 @@
-import { getGlobalCommandConfigCollection } from "../models/globalCommandConfig.model";
+import { getGlobalCommandConfigCollection } from "../../models/globalCommandConfig.model";
 
 export class GlobalCommandConfigService {
   async findByCommand(command: string) {

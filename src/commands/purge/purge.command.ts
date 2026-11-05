@@ -1,8 +1,8 @@
 import { delay } from "baileys";
 import { whatsappClient } from "../../core/whatsapp/client";
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
-import { UserService } from "../../database/services/user.service";
-import { GroupService } from "../../database/services/group.service";
+import { UserService } from "../../database/services/UserService/user.service";
+import { GroupService } from "../../database/services/GroupService/group.service";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";
 import {

@@ -1,5 +1,5 @@
-import type { User } from "../interfaces/user.interface";
-import { getUserCollection } from "../models/user.model";
+import type { User } from "../../interfaces/user.interface";
+import { getUserCollection } from "../../models/user.model";
 
 /**
  * Service responsible for managing users stored in the database.

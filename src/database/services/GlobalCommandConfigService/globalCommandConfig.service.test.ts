@@ -4,7 +4,7 @@ import { ObjectId } from "mongodb";
 const findOne = mock();
 const findOneAndUpdate = mock();
 
-mock.module("../models/globalCommandConfig.model", () => ({
+mock.module("../../models/globalCommandConfig.model", () => ({
   getGlobalCommandConfigCollection: () => ({ findOne, findOneAndUpdate }),
 }));
 

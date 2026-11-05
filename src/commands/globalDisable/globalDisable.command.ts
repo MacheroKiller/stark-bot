@@ -1,5 +1,5 @@
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
-import { GlobalCommandConfigService } from "../../database/services/globalCommandConfig.service";
+import { GlobalCommandConfigService } from "../../database/services/GlobalCommandConfigService/globalCommandConfig.service";
 import { handlers } from "../command.registry";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";

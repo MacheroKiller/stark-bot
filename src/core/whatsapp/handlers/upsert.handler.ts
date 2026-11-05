@@ -1,16 +1,18 @@
-import { type WASocket } from "baileys";
+import { type WASocket, type proto } from "baileys";
 import {
   HandleCommand,
   type ContextMessageDTO,
 } from "../../../commands/handle-command";
 import type { Group } from "../../../database/interfaces/group.interface";
-import { GroupService } from "../../../database/services/group.service";
+import { GroupService } from "../../../database/services/GroupService/group.service";
 import { extractChatJid, isGroupJid } from "../../../shared/utils/jid/jid";
 import logger from "../../../shared/utils/logger/logger";
-import { UserService } from "./../../../database/services/user.service";
+import { UserService } from "../../../database/services/UserService/user.service";
 import { getOwnerJids, isOwner } from "../../../shared/utils/owner/owner";
 import { sendMessageToGroup } from "../send-message";
 import { isGroupAllowedInCurrentEnv } from "../../../shared/utils/env/env";
+import { GroupSummaryConfigService } from "../../../database/services/GroupSummaryConfigService/groupSummaryConfig.service";
+import { MessageHistoryService } from "../../../database/services/MessageHistoryService/messageHistory.service";
 
 /**
  * Listens for incoming WhatsApp messages.
@@ -21,6 +23,8 @@ export function MessageUpsertEvents(sock: WASocket) {
   const groupService = new GroupService();
   const handleCommand = new HandleCommand();
   const userService = new UserService();
+  const groupSummaryConfigService = new GroupSummaryConfigService();
+  const messageHistoryService = new MessageHistoryService();
 
   sock.ev.on("messages.upsert", async ({ messages }) => {
     for (const msg of messages) {
@@ -65,8 +69,17 @@ export function MessageUpsertEvents(sock: WASocket) {
           continue;
         }
 
-        if (isFromGroup && !group.isAnnouncementOnly)
+        if (isFromGroup && !group.isAnnouncementOnly) {
           await countMessage(group, context, userService);
+          await recordMessageForSummary(
+            group,
+            context,
+            trimmedText,
+            msg,
+            groupSummaryConfigService,
+            messageHistoryService,
+          );
+        }
         if (isCommand) await handleCommand.handle(trimmedText, context, msg);
       } catch (error) {
         logger.error("Error procesando mensaje individual en messages.upsert", {
@@ -177,4 +190,40 @@ async function countMessage(
 
   if (isNewUser?.totalMessagesSent === 1)
     logger.info(`Nuevo participante agregado: ${context.senderJid}`);
+}
+
+/**
+ * Logs the message text (and the sender's display name) for the group's
+ * weekly summary — only for groups that opted in with /setsummaryprompt.
+ * The opt-in check is an in-memory Set lookup, so for every other group this
+ * costs nothing and never touches Mongo. Counting and commands behave
+ * exactly as before regardless of this.
+ *
+ * A failure here must never break message processing, so it is contained.
+ */
+async function recordMessageForSummary(
+  group: Group,
+  context: ContextMessageDTO,
+  text: string,
+  msg: proto.IWebMessageInfo,
+  groupSummaryConfigService: GroupSummaryConfigService,
+  messageHistoryService: MessageHistoryService,
+) {
+  if (!groupSummaryConfigService.isEnabled(group.whatsappId)) return;
+
+  try {
+    const timestamp = msg.messageTimestamp
+      ? new Date(Number(msg.messageTimestamp) * 1000)
+      : new Date();
+
+    await messageHistoryService.record(
+      group.whatsappId,
+      context.senderJid,
+      msg.pushName,
+      text,
+      timestamp,
+    );
+  } catch (error) {
+    logger.error("Error guardando mensaje para el informe semanal", { error });
+  }
 }

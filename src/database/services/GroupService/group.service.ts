@@ -2,8 +2,8 @@ import type {
   CommandOverride,
   Group,
   GroupStatus,
-} from "../interfaces/group.interface";
-import { getGroupCollection } from "../models/group.model";
+} from "../../interfaces/group.interface";
+import { getGroupCollection } from "../../models/group.model";
 
 /**
  * Service responsible for managing WhatsApp groups stored in the database.

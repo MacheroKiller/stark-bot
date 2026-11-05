@@ -1,15 +1,14 @@
 import { beforeEach, describe, expect, mock, test } from "bun:test";
 import { ObjectId } from "mongodb";
-import type { Group } from "../interfaces/group.interface";
+import type { Group } from "../../interfaces/group.interface";
+import { GroupService } from "./group.service";
 
 const findOne = mock();
 const findOneAndUpdate = mock();
 
-mock.module("../models/group.model", () => ({
+mock.module("../../models/group.model", () => ({
   getGroupCollection: () => ({ findOne, findOneAndUpdate }),
 }));
-
-const { GroupService } = await import("./group.service");
 
 describe("GroupService.findByWhatsappId", () => {
   beforeEach(() => {
