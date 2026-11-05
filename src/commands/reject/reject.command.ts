@@ -1,7 +1,7 @@
 import type { proto } from "baileys";
 import type { CommandHandler } from "../interfaces/command.interface";
 import { Commands } from "../enums/commands.enum";
-import { GroupService } from "../../database/services/group.service";
+import { GroupService } from "../../database/services/GroupService/group.service";
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 
 export class RejectCommand implements CommandHandler {

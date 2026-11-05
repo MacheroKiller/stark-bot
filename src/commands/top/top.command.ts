@@ -1,6 +1,6 @@
 import { sendMessageToGroup } from "../../core/whatsapp/send-message";
 import type { User } from "../../database/interfaces/user.interface";
-import { UserService } from "../../database/services/user.service";
+import { UserService } from "../../database/services/UserService/user.service";
 import { removeLidSuffix } from "../../shared/utils/jid/jid";
 import { Commands } from "../enums/commands.enum";
 import type { CommandHandler } from "../interfaces/command.interface";

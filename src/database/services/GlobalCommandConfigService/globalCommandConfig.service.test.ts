@@ -9,7 +9,7 @@ mock.module("../models/globalCommandConfig.model", () => ({
 }));
 
 const { GlobalCommandConfigService } =
-  await import("./globalCommandConfig.service");
+  await import("../globalCommandConfig.service");
 
 describe("GlobalCommandConfigService.findByCommand", () => {
   beforeEach(() => {

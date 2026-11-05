@@ -1,7 +1,7 @@
 import { handlers } from "./commands/command.registry";
 import { whatsappClient } from "./core/whatsapp/client";
 import { initDatabase } from "./database/database.bootstrap";
-import { GlobalCommandConfigService } from "./database/services/globalCommandConfig.service";
+import { GlobalCommandConfigService } from "./database/services/GlobalCommandConfigService/globalCommandConfig.service";
 import type { ILogger } from "./shared/utils/logger/logger";
 import logger, { createLogger } from "./shared/utils/logger/logger";
 

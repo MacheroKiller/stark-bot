@@ -4,10 +4,10 @@ import {
   type ContextMessageDTO,
 } from "../../../commands/handle-command";
 import type { Group } from "../../../database/interfaces/group.interface";
-import { GroupService } from "../../../database/services/group.service";
+import { GroupService } from "../../../database/services/GroupService/group.service";
 import { extractChatJid, isGroupJid } from "../../../shared/utils/jid/jid";
 import logger from "../../../shared/utils/logger/logger";
-import { UserService } from "./../../../database/services/user.service";
+import { UserService } from "../../../database/services/UserService/user.service";
 import { getOwnerJids, isOwner } from "../../../shared/utils/owner/owner";
 import { sendMessageToGroup } from "../send-message";
 import { isGroupAllowedInCurrentEnv } from "../../../shared/utils/env/env";

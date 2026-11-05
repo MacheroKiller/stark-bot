@@ -17,6 +17,7 @@
     "typescript": "^5"
   },
   "dependencies": {
+    "@google/genai": "^2.27.0",
     "baileys": "^7.0.0-rc14",
     "mongodb": "6.16.0",
     "pino": "^10.3.1",
