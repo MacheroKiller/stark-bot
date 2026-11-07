@@ -74,7 +74,7 @@ export function MessageUpsertEvents(sock: WASocket) {
           await recordMessageForSummary(
             group,
             context,
-            trimmedText,
+            extractSummaryText(msg, trimmedText),
             msg,
             groupSummaryConfigService,
             messageHistoryService,
@@ -190,6 +190,48 @@ async function countMessage(
 
   if (isNewUser?.totalMessagesSent === 1)
     logger.info(`Nuevo participante agregado: ${context.senderJid}`);
+}
+
+/**
+ * Text to store in the weekly-summary log for a message.
+ *
+ * Plain text is returned as is. For media messages the caption is the only
+ * text there is, so it is kept and prefixed with a marker ("[imagen]",
+ * "[video]", "[documento]") that tells the model a file came with it — e.g.
+ * "[imagen] Consignación hecha!" is a payment proof. A media message with no
+ * caption is still logged as just the marker, since the file itself is the
+ * evidence.
+ *
+ * Only used for the summary log: command detection and message counting keep
+ * using the original text, so a caption starting with "/" is never treated
+ * as a command.
+ */
+function extractSummaryText(
+  msg: proto.IWebMessageInfo,
+  plainText: string,
+): string {
+  if (plainText) return plainText;
+
+  const message = msg.message;
+  if (!message) return "";
+
+  const media: Array<[string, string | null | undefined, boolean]> = [
+    ["[imagen]", message.imageMessage?.caption, !!message.imageMessage],
+    ["[video]", message.videoMessage?.caption, !!message.videoMessage],
+    [
+      "[documento]",
+      message.documentMessage?.caption,
+      !!message.documentMessage,
+    ],
+  ];
+
+  for (const [marker, caption, present] of media) {
+    if (!present) continue;
+    const trimmedCaption = caption?.trim();
+    return trimmedCaption ? `${marker} ${trimmedCaption}` : marker;
+  }
+
+  return "";
 }
 
 /**

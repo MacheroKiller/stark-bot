@@ -35,6 +35,12 @@ export interface SummaryServiceConfig {
   apiKey: string;
   /** Gemini model identifier. Defaults to gemini-3.1-flash-lite. */
   model?: string;
+  /**
+   * Sampling temperature. Defaults to 0.2: the report extracts facts from a
+   * chat, so we want (almost) the same output for the same input instead of
+   * creative variation between runs.
+   */
+  temperature?: number;
   /** Retry overrides — mostly useful for tests. */
   retry?: {
     maxAttempts?: number;
@@ -59,12 +65,14 @@ export function isRetryableGeminiError(error: unknown): boolean {
 export class SummaryService {
   private readonly ai: GoogleGenAI;
   private readonly model: string;
+  private readonly temperature: number;
   private readonly maxAttempts: number;
   private readonly baseDelayMs: number;
 
   constructor(config: SummaryServiceConfig) {
     this.ai = new GoogleGenAI({ apiKey: config.apiKey });
     this.model = config.model ?? "gemini-3.1-flash-lite";
+    this.temperature = config.temperature ?? 0.2;
     this.maxAttempts = config.retry?.maxAttempts ?? 4;
     // Runs in a background weekly job: nobody waits on it, so a long
     // backoff (30s → 2min → 8min) is fine and gives Gemini time to recover.
@@ -93,6 +101,7 @@ export class SummaryService {
         this.ai.models.generateContent({
           model: this.model,
           contents: prompt,
+          config: { temperature: this.temperature },
         }),
       {
         maxAttempts: this.maxAttempts,
